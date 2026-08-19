@@ -1,6 +1,6 @@
 // App.tsx
 import React, { useRef } from 'react';
-import { StatusBar } from 'expo-status-bar';
+import { StatusBar } from 'expo-status-bar'; // <-- Certifique-se de que o import vem do Expo
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
@@ -9,54 +9,53 @@ import { engineService } from './src/features/bot/service/engine.service';
 import { analysisService } from './src/features/stockfish/analysis/service/analysis.service';
 
 export default function App() {
-  const webviewRef = useRef<WebView>(null);
+  const botWebViewRef = useRef<WebView>(null);
+  const analysisWebViewRef = useRef<WebView>(null);
 
-  const handleEngineMessage = (event: any) => {
-    const output = event.nativeEvent.data;
-    
-    // DEBUG: Descomente a linha abaixo para ver a IA "pensando" no seu terminal
-    // console.log('[STOCKFISH]:', output);
-    
-    engineService.receiveMessageFromEngine(output);
-    analysisService.receiveMessageFromEngine(output);
+  const handleBotMessage = (event: any) => {
+    engineService.receiveMessageFromEngine(event.nativeEvent.data);
   };
 
-  const handleWebViewLoad = () => {
-    console.log('[SISTEMA]: WebView carregou. Injetando comandos...');
-
-    const sendMessage = (msg: string) => {
-      webviewRef.current?.injectJavaScript(`
-        if (typeof stockfish !== 'undefined') {
-          stockfish.postMessage('${msg}');
-        }
-        true;
-      `);
+  const handleBotLoad = () => {
+    engineService.sendMessageToEngine = (msg: string) => {
+      botWebViewRef.current?.injectJavaScript(`if (typeof stockfish !== 'undefined') { stockfish.postMessage('${msg}'); } true;`);
     };
-
-    engineService.sendMessageToEngine = sendMessage;
-    analysisService.sendMessageToEngine = sendMessage;
     engineService.initEngine();
   };
 
-  // HTML injetado com um link real e funcional para testes
+  const handleAnalysisMessage = (event: any) => {
+    analysisService.receiveMessageFromEngine(event.nativeEvent.data);
+  };
+
+  const handleAnalysisLoad = () => {
+    analysisService.sendMessageToEngine = (msg: string) => {
+      analysisWebViewRef.current?.injectJavaScript(`if (typeof stockfish !== 'undefined') { stockfish.postMessage('${msg}'); } true;`);
+    };
+  };
+
   const stockfishHtml = `
     <!DOCTYPE html>
     <html>
       <head>
         <script>
-          try {
-            // Usando um CDN público para testar o Stockfish puramente em JS
-            var stockfish = new Worker('https://unpkg.com/stockfish.js@10.0.2/stockfish.js');
-            
-            stockfish.onmessage = function(event) {
-              window.ReactNativeWebView.postMessage(event.data);
-            };
-            
-            // Avisa o React Native que o script iniciou
-            window.ReactNativeWebView.postMessage('WORKER_INICIADO');
-          } catch (e) {
-            window.ReactNativeWebView.postMessage('ERRO_NO_WORKER: ' + e.message);
+          async function initStockfish() {
+            try {
+              const response = await fetch('https://unpkg.com/stockfish.js@10.0.2/stockfish.js');
+              const scriptText = await response.text();
+              const blob = new Blob([scriptText], { type: 'application/javascript' });
+              const blobUrl = URL.createObjectURL(blob);
+              
+              window.stockfish = new Worker(blobUrl);
+              window.stockfish.onmessage = function(event) {
+                window.ReactNativeWebView.postMessage(event.data);
+              };
+              
+              window.ReactNativeWebView.postMessage('uciok');
+            } catch (e) {
+              window.ReactNativeWebView.postMessage('ERRO: ' + e.message);
+            }
           }
+          initStockfish();
         </script>
       </head>
       <body></body>
@@ -65,19 +64,27 @@ export default function App() {
 
   return (
     <SafeAreaProvider style={{ backgroundColor: '#020617' }}>
-      <StatusBar style="light" backgroundColor="#020617" />
+      {/* Removido o backgroundColor problemático. style="light" deixa o relógio e bateria brancos */}
+      <StatusBar style="light" /> 
       
       <AppRoutes />
 
       <WebView
-        ref={webviewRef}
+        ref={botWebViewRef}
         source={{ html: stockfishHtml }}
-        onMessage={handleEngineMessage}
-        onLoadEnd={handleWebViewLoad}
-        // DEBUG: Se a tela ficar em branco, mude opacity para 1 e zIndex para 100 para ver se o WebView está quebrando
+        onMessage={handleBotMessage}
+        onLoadEnd={handleBotLoad}
         style={{ width: 0, height: 0, opacity: 0 }} 
         javaScriptEnabled={true}
-        originWhitelist={['*']}
+      />
+
+      <WebView
+        ref={analysisWebViewRef}
+        source={{ html: stockfishHtml }}
+        onMessage={handleAnalysisMessage}
+        onLoadEnd={handleAnalysisLoad}
+        style={{ width: 0, height: 0, opacity: 0 }} 
+        javaScriptEnabled={true}
       />
     </SafeAreaProvider>
   );
