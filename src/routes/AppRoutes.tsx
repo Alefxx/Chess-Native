@@ -7,15 +7,15 @@ import { useAuthStore } from '@/store/authStore';
 // Telas
 import { LoginView } from '@/features/auth/view/LoginView';
 import { RegisterView } from '@/features/auth/view/RegisterView';
-import { DashboardView } from '@/features/dashboard/view/DashboardView';
-import { BotView } from '@/features/matchconfig/BotView';
+import { DashboardView } from '@/features/dashboard/view/DashBoardView';
+import { BotView } from '@/features/botselection/view/BotView';
 import { TimeView } from '@/features/timeselection/view/TimeView';
 import { MatchView } from '@/features/match/view/MatchView'; 
 import { ProfileView } from '@/features/profile/ProfileView'; 
 import { GameModeView } from '@/features/gamemode/view/GameModeView';
 import { LocalView } from '@/features/localmatch/view/LocalView';
 import { GameLocal } from '@/features/match/view/GameLocalView';
-import { MatchAnalysis } from '@/screens/MatchAnalysis';
+import { MatchAnalysis } from '@/features/matchanalysis/view/MatchAnalysis';
 
 // Tipagem estrita das rotas (Evita enviar parâmetros errados no navigate)
 export type RootStackParamList = {
