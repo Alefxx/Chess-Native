@@ -13,7 +13,6 @@ import { TimeView } from '@/features/timeselection/view/TimeView';
 import { MatchView } from '@/features/match/view/MatchView'; 
 import { ProfileView } from '@/features/profile/ProfileView'; 
 import { GameModeView } from '@/features/gamemode/view/GameModeView';
-import { LocalView } from '@/features/localmatch/view/LocalView';
 import { GameLocal } from '@/features/match/view/GameLocalView';
 import { MatchAnalysis } from '@/features/matchanalysis/view/MatchAnalysis';
 
@@ -67,7 +66,6 @@ export function AppRoutes() {
             <Stack.Screen name="Profile" component={ProfileView} />
             <Stack.Screen name="GameMode" component={GameModeView} />
             <Stack.Screen name="Bots" component={BotView} />
-            <Stack.Screen name="LocalView" component={LocalView} />
             <Stack.Screen name="Time" component={TimeView} />
             
             <Stack.Screen 
