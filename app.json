@@ -32,8 +32,8 @@
           "imageWidth": 76
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-image"
     ]
   }
 }
-

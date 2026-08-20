@@ -1,10 +1,8 @@
 // src/components/pieces/ChessPiece.tsx
 import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Image } from 'expo-image'; // 👈 Importa do expo-image, NÃO do react-native!
 
-// O dicionário agora usa o require() para importar os arquivos físicos.
-// Assumindo que este arquivo está em src/components/pieces/
-// e as imagens estão em src/assets/pieces/
 export const pieceImages: Record<string, any> = {
   'bP': require('../../assets/pieces/bP.svg'),
   'bR': require('../../assets/pieces/bR.svg'),
@@ -25,7 +23,6 @@ interface ChessPieceProps {
 }
 
 export function ChessPiece({ char }: ChessPieceProps) {
-  // Ponte lógica: Converte o caractere FEN ('p') para a chave da imagem ('bP')
   const isWhite = char === char.toUpperCase();
   const colorPrefix = isWhite ? 'w' : 'b';
   const typeUpper = char.toUpperCase();
@@ -36,13 +33,11 @@ export function ChessPiece({ char }: ChessPieceProps) {
   if (!imageSource) return null;
 
   return (
-    // pointerEvents="none" garante que os toques passem direto pela imagem 
-    // e sejam registrados no "quadrado" do tabuleiro que está embaixo dela
     <View style={styles.container} pointerEvents="none">
       <Image 
         source={imageSource}
         style={styles.image}
-        resizeMode="contain"
+        contentFit="contain" // 👈 No expo-image usa contentFit em vez de resizeMode
       />
     </View>
   );
@@ -55,15 +50,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
-    // Efeito de sombra (drop-shadow) adaptado para mobile
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
     shadowRadius: 2,
-    elevation: 3, // Sombras no Android
+    elevation: 3,
   },
   image: {
     width: '85%',
     height: '85%',
   }
 });
+
