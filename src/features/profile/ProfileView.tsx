@@ -6,9 +6,6 @@ import {
   Image, 
   TextInput, 
   StyleSheet, 
-  SafeAreaView, 
-  KeyboardAvoidingView, 
-  Platform, 
   ScrollView, 
   Pressable 
 } from 'react-native';
@@ -19,11 +16,11 @@ import { useAuthStore } from '@/store/authStore';
 import { apiClient } from '@/api/apiClient';
 import { IconButton } from '@/components/ui/IconButton';
 import { Button } from '@/components/ui/Button';
+import { ScreenLayout } from '@/components/layout/ScreenLayout'; // <-- Import do nosso Layout Profissional!
 
 // ==========================================
 // ARQUITETURA MOBILE: Dicionário de Imagens
 // ==========================================
-// Como não temos a pasta 'public', mapeamos a string do banco para o asset local.
 const AVATAR_MAP: Record<string, any> = {
   '/fotosperfil/perfil1.jpg': require('../../assets/fotosperfil/perfil1.jpg'),
   '/fotosperfil/perfil2.jpg': require('../../assets/fotosperfil/perfil2.jpg'),
@@ -47,10 +44,8 @@ export function ProfileView() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Extrai as chaves do mapa para renderizar o grid
   const listaFotos = Object.keys(AVATAR_MAP);
 
-  // Função auxiliar para resolver a imagem (seja local do mapa ou uma URL externa)
   const getAvatarSource = (path: string) => {
     return AVATAR_MAP[path] ? AVATAR_MAP[path] : { uri: path };
   };
@@ -88,203 +83,194 @@ export function ProfileView() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView 
-        style={styles.keyboardView} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    // Substituímos o SafeAreaView e o KeyboardAvoidingView nativos pelo nosso componente
+    <ScreenLayout noPadding>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent} 
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled" // Permite clicar em botões mesmo com o teclado aberto
-        >
+        
+        {/* Cabeçalho */}
+        <View style={styles.header}>
+          <IconButton 
+            icon={<ArrowLeft size={24} color="#ffffff" />} 
+            onPress={() => navigation.navigate('Dashboard')} 
+          />
+          <Text style={styles.headerTitle}>Meu Perfil</Text>
+        </View>
+
+        {/* Área Central: Visualização e Edição */}
+        <View style={styles.card}>
           
-          {/* Cabeçalho */}
-          <View style={styles.header}>
-            <IconButton 
-              icon={<ArrowLeft size={24} color="#ffffff" />} 
-              onPress={() => navigation.navigate('Dashboard')} // Substituído onClick por onPress
+          {/* Foto de Perfil Atual */}
+          <View style={styles.avatarHighlightContainer}>
+            <Image 
+              source={getAvatarSource(fotoSelecionada)} 
+              style={styles.avatarHighlightImage} 
             />
-            <Text style={styles.headerTitle}>Meu Perfil</Text>
           </View>
 
-          {/* Área Central: Visualização e Edição */}
-          <View style={styles.card}>
+          {/* Campo de Nome */}
+          <View style={styles.nameContainer}>
+            <Text style={styles.nameLabel}>Nome do Jogador</Text>
             
-            {/* Foto de Perfil Atual */}
-            <View style={styles.avatarHighlightContainer}>
-              <Image 
-                source={getAvatarSource(fotoSelecionada)} 
-                style={styles.avatarHighlightImage} 
-              />
-            </View>
-
-            {/* Campo de Nome */}
-            <View style={styles.nameContainer}>
-              <Text style={styles.nameLabel}>Nome do Jogador</Text>
+            <View style={styles.inputRow}>
+              {isEditingName ? (
+                <TextInput
+                  value={nome}
+                  onChangeText={setNome} 
+                  style={styles.textInput}
+                  autoFocus
+                  placeholder="Digite seu nome"
+                  placeholderTextColor="#64748b"
+                />
+              ) : (
+                <Text style={styles.nameDisplay} numberOfLines={1}>
+                  {nome}
+                </Text>
+              )}
               
-              <View style={styles.inputRow}>
-                {isEditingName ? (
-                  <TextInput
-                    value={nome}
-                    onChangeText={setNome} // No mobile usamos onChangeText
-                    style={styles.textInput}
-                    autoFocus
-                    placeholder="Digite seu nome"
-                    placeholderTextColor="#64748b"
-                  />
-                ) : (
-                  <Text style={styles.nameDisplay} numberOfLines={1}>
-                    {nome}
-                  </Text>
-                )}
-                
-                <Pressable
-                  onPress={() => setIsEditingName(!isEditingName)}
-                  style={({ pressed }) => [
-                    styles.editIconBtn,
-                    pressed && { opacity: 0.7 }
-                  ]}
-                >
-                  {isEditingName 
-                    ? <Check size={20} color="#88c425" /> 
-                    : <Pencil size={18} color="#94a3b8" />
-                  }
-                </Pressable>
-              </View>
+              <Pressable
+                onPress={() => setIsEditingName(!isEditingName)}
+                style={({ pressed }) => [
+                  styles.editIconBtn,
+                  pressed && { opacity: 0.7 }
+                ]}
+              >
+                {isEditingName 
+                  ? <Check size={20} color="#88c425" /> 
+                  : <Pencil size={18} color="#94a3b8" />
+                }
+              </Pressable>
             </View>
-
-            {/* Grade de Seleção de Avatares */}
-            <View style={styles.gridSection}>
-              <Text style={styles.gridLabel}>Escolha um novo Avatar</Text>
-              
-              <View style={styles.grid}>
-                {listaFotos.map((path, index) => {
-                  const isSelected = fotoSelecionada === path;
-                  
-                  return (
-                    <Pressable
-                      key={index}
-                      onPress={() => setFotoSelecionada(path)}
-                      style={({ pressed }) => [
-                        styles.gridItem,
-                        isSelected ? styles.gridItemSelected : styles.gridItemUnselected,
-                        pressed && !isSelected && { transform: [{ scale: 0.95 }] }
-                      ]}
-                    >
-                      <Image 
-                        source={getAvatarSource(path)} 
-                        style={styles.gridImage} 
-                      />
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Exibição de Erros Técnicos */}
-            {errorMsg ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{errorMsg}</Text>
-              </View>
-            ) : null}
-
-            {/* Ação de Confirmação */}
-            <View style={styles.actionContainer}>
-              <Button 
-                label={isLoading ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'} 
-                onPress={handleSalvarAlteracoes} // Substituído onClick por onPress
-                size="md"
-              />
-            </View>
-
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+          {/* Grade de Seleção de Avatares */}
+          <View style={styles.gridSection}>
+            <Text style={styles.gridLabel}>Escolha um novo Avatar</Text>
+            
+            <View style={styles.grid}>
+              {listaFotos.map((path, index) => {
+                const isSelected = fotoSelecionada === path;
+                
+                return (
+                  <Pressable
+                    key={index}
+                    onPress={() => setFotoSelecionada(path)}
+                    style={({ pressed }) => [
+                      styles.gridItem,
+                      isSelected ? styles.gridItemSelected : styles.gridItemUnselected,
+                      pressed && !isSelected && { transform: [{ scale: 0.95 }] }
+                    ]}
+                  >
+                    <Image 
+                      source={getAvatarSource(path)} 
+                      style={styles.gridImage} 
+                    />
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Exibição de Erros Técnicos */}
+          {errorMsg ? (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{errorMsg}</Text>
+            </View>
+          ) : null}
+
+          {/* Ação de Confirmação */}
+          <View style={styles.actionContainer}>
+            <Button 
+              label={isLoading ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'} 
+              onPress={handleSalvarAlteracoes} 
+              size="md"
+            />
+          </View>
+
+        </View>
+      </ScrollView>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#020617', // bg-slate-950
-  },
-  keyboardView: {
-    flex: 1,
-  },
+  // Removido styles.safeArea e styles.keyboardView
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 40,
     alignItems: 'center',
+    flexGrow: 1, // Isso garante que o conteúdo estique até o final se a tela for muito grande
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16, // gap-4
+    gap: 16, 
     width: '100%',
-    maxWidth: 576, // max-w-xl
-    marginBottom: 40, // mb-10
+    maxWidth: 576, 
+    marginBottom: 40, 
   },
   headerTitle: {
-    fontSize: 24, // text-2xl
-    fontWeight: '900', // font-black
+    fontSize: 24, 
+    fontWeight: '900', 
     color: '#ffffff',
   },
   card: {
     width: '100%',
     maxWidth: 576,
-    backgroundColor: '#1e293b', // bg-slate-800
-    padding: 24, // p-6
-    borderRadius: 12, // rounded-xl
+    backgroundColor: '#1e293b', 
+    padding: 24, 
+    borderRadius: 12, 
     borderWidth: 1,
-    borderColor: '#334155', // border-slate-700
+    borderColor: '#334155', 
     alignItems: 'center',
-    elevation: 10, // shadow-xl
+    elevation: 10, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.2,
     shadowRadius: 15,
   },
   avatarHighlightContainer: {
-    width: 128, // w-32
-    height: 128, // h-32
-    borderRadius: 64, // rounded-full
-    backgroundColor: '#334155', // bg-slate-700
+    width: 128, 
+    height: 128, 
+    borderRadius: 64, 
+    backgroundColor: '#334155', 
     borderWidth: 4,
-    borderColor: '#88c425', // border-chess-green
+    borderColor: '#88c425', 
     overflow: 'hidden',
     marginBottom: 32,
-    elevation: 8, // shadow-lg
+    elevation: 8, 
   },
   avatarHighlightImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover', // object-cover
+    resizeMode: 'cover', 
   },
   nameContainer: {
     width: '100%',
-    maxWidth: 384, // max-w-sm
-    gap: 8, // gap-2
+    maxWidth: 384, 
+    gap: 8, 
     marginBottom: 32,
   },
   nameLabel: {
-    fontSize: 12, // text-xs
+    fontSize: 12, 
     fontWeight: 'bold',
-    color: '#94a3b8', // text-slate-400
+    color: '#94a3b8', 
     textTransform: 'uppercase',
-    letterSpacing: 1, // tracking-wider
+    letterSpacing: 1, 
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#0f172a', // bg-slate-900
-    padding: 12, // p-3
-    borderRadius: 8, // rounded-lg
+    backgroundColor: '#0f172a', 
+    padding: 12, 
+    borderRadius: 8, 
     borderWidth: 1,
-    borderColor: '#334155', // border-slate-700
+    borderColor: '#334155', 
   },
   nameDisplay: {
     flex: 1,
@@ -297,14 +283,14 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
     fontSize: 16,
-    padding: 0, // Zera o padding padrão do TextInput do Android
+    padding: 0, 
   },
   editIconBtn: {
     padding: 4,
   },
   gridSection: {
     width: '100%',
-    gap: 12, // gap-3
+    gap: 12, 
     marginBottom: 32,
   },
   gridLabel: {
@@ -319,23 +305,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 12, // Para RN mais novos. Se quebrar na sua versão, substitua por margins no gridItem
+    gap: 12, 
   },
   gridItem: {
-    width: '22%', // ~4 itens por linha (simulando grid-cols-4)
-    aspectRatio: 1, // Mantém quadrado
+    width: '22%', 
+    aspectRatio: 1, 
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: '#0f172a', // bg-slate-900
+    backgroundColor: '#0f172a', 
     borderWidth: 2,
   },
   gridItemSelected: {
-    borderColor: '#88c425', // border-chess-green
+    borderColor: '#88c425', 
     transform: [{ scale: 1.05 }],
-    elevation: 4, // shadow-md
+    elevation: 4, 
   },
   gridItemUnselected: {
-    borderColor: '#334155', // border-slate-700
+    borderColor: '#334155', 
   },
   gridImage: {
     width: '100%',
@@ -344,8 +330,8 @@ const styles = StyleSheet.create({
   },
   errorBox: {
     width: '100%',
-    padding: 12, // p-3
-    backgroundColor: 'rgba(127, 29, 29, 0.5)', // bg-red-900/50
+    padding: 12, 
+    backgroundColor: 'rgba(127, 29, 29, 0.5)', 
     borderColor: '#ef4444',
     borderWidth: 1,
     borderRadius: 8,
@@ -358,7 +344,6 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     width: '100%',
-    paddingTop: 16, // pt-4
+    paddingTop: 16, 
   }
 });
-

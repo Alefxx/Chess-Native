@@ -1,6 +1,6 @@
 // src/screens/MatchAnalysis.tsx
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { LogOut } from 'lucide-react-native';
 
@@ -19,6 +19,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useMatchAnalysis } from '@/features/matchanalysis/hooks/useMatchAnalysis';
 import { useAnalysis } from '@/features/stockfish/analysis/hooks/useAnalysis';
 import { Button } from '@/components/ui/Button';
+import { ScreenLayout } from '@/components/layout/ScreenLayout'; // <-- Import do Layout
 
 const QUALITY_MAP: Record<number, MoveQuality> = {
   0: 'book',
@@ -67,7 +68,6 @@ export function MatchAnalysis() {
     ? QUALITY_MAP[currentQualityCode] 
     : null;
 
-  // Atualizado para ViewStyle nativo
   const getCombinedStyles = () => {
     const styles: Record<string, ViewStyle> = {}; 
     if (lastMove) {
@@ -77,10 +77,9 @@ export function MatchAnalysis() {
     return styles;
   };
 
-  // NOTA: window.addEventListener('keydown') removido pois não faz sentido no ecossistema Mobile
-
   return (
-    <SafeAreaView style={styles.safeArea}>
+    // Substituindo SafeAreaView pelo ScreenLayout com noPadding
+    <ScreenLayout noPadding>
       <View style={styles.container}>
         
         {/* Bloco 1: Adversário */}
@@ -123,7 +122,6 @@ export function MatchAnalysis() {
                 <View style={styles.qualityCenter}>
                   {currentQuality ? (
                     <View style={styles.qualityTag}>
-                      {/* O componente MoveQualityIcon precisa aceitar estilos ou estar preparado p/ scale no wrapper */}
                       <MoveQualityIcon quality={currentQuality} />
                       <Text style={styles.qualityText}>
                         {currentQuality === 'book' ? 'Teoria' :
@@ -168,20 +166,16 @@ export function MatchAnalysis() {
 
         {/* Bloco 4: Histórico e Ações Finais */}
         <View style={styles.footer}>
-          {/* MoveHistoryBoard (com flex: 1 internamente para rolar) */}
           <MoveHistoryBoard 
             pgnHistory={moveHistory} 
-            // Você pode adicionar suporte ao index atual no seu componente MoveHistoryBoard Mobile
-            // currentMoveIndex={currentMoveIndex > 0 ? currentMoveIndex - 1 : -1} 
-            // onMoveClick={(pgnIndex) => goToMove(pgnIndex + 1)} 
-            onProporEmpate={() => {}} // Não aplicável em análise
-            onAbandonar={() => {}}   // Não aplicável em análise
+            onProporEmpate={() => {}} 
+            onAbandonar={() => {}}   
           />
           
           <View style={styles.exitWrapper}>
             <Button 
               label="Sair da Análise" 
-              variant="danger" // Reutilizamos o estilo danger existente
+              variant="danger" 
               onPress={() => navigation.navigate('Dashboard')}
               icon={<LogOut size={18} color="#fff" />}
             />
@@ -189,18 +183,15 @@ export function MatchAnalysis() {
         </View>
         
       </View>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#020617',
-  },
+  // safeArea removido
   container: {
     flex: 1,
-    paddingHorizontal: 8,
+    paddingHorizontal: 8, // Mantemos o padding mais justo para sobrar espaço pro Tabuleiro
     paddingVertical: 16,
     gap: 8,
   },
@@ -211,18 +202,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.4)', // bg-slate-800/40
+    backgroundColor: 'rgba(30, 41, 59, 0.4)', 
     padding: 8,
     borderRadius: 8,
   },
   badge: {
-    backgroundColor: '#0f172a', // bg-slate-900
+    backgroundColor: '#0f172a', 
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 6,
   },
   badgeText: {
-    color: '#64748b', // text-slate-500
+    color: '#64748b', 
     fontWeight: '600',
     fontSize: 12,
   },
@@ -241,11 +232,11 @@ const styles = StyleSheet.create({
   },
   controlsWrapper: {
     marginTop: 16,
-    backgroundColor: 'rgba(30, 41, 59, 0.6)', // bg-slate-800/60
+    backgroundColor: 'rgba(30, 41, 59, 0.6)', 
     padding: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155', // border-slate-700
+    borderColor: '#334155', 
   },
   controlsRow: {
     flexDirection: 'row',
@@ -296,4 +287,3 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
   }
 });
-

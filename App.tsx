@@ -1,8 +1,9 @@
 // App.tsx
 import React, { useRef } from 'react';
-import { StatusBar } from 'expo-status-bar'; // <-- Certifique-se de que o import vem do Expo
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
+import { View, StyleSheet } from 'react-native';
 
 import { AppRoutes } from './src/routes/AppRoutes';
 import { engineService } from './src/features/bot/service/engine.service';
@@ -63,18 +64,21 @@ export default function App() {
   `;
 
   return (
-    <SafeAreaProvider style={{ backgroundColor: '#020617' }}>
-      {/* Removido o backgroundColor problemático. style="light" deixa o relógio e bateria brancos */}
+    // initialMetrics garante que o Android calcule o tamanho da tela corretamente no primeiro frame
+    <SafeAreaProvider style={styles.root} initialMetrics={initialWindowMetrics}> 
       <StatusBar style="light" /> 
       
-      <AppRoutes />
+      {/* View forçando o roteador a preencher o espaço restante */}
+      <View style={styles.container}>
+        <AppRoutes />
+      </View>
 
       <WebView
         ref={botWebViewRef}
         source={{ html: stockfishHtml }}
         onMessage={handleBotMessage}
         onLoadEnd={handleBotLoad}
-        style={{ width: 0, height: 0, opacity: 0 }} 
+        style={styles.webview} 
         javaScriptEnabled={true}
       />
 
@@ -83,9 +87,25 @@ export default function App() {
         source={{ html: stockfishHtml }}
         onMessage={handleAnalysisMessage}
         onLoadEnd={handleAnalysisLoad}
-        style={{ width: 0, height: 0, opacity: 0 }} 
+        style={styles.webview} 
         javaScriptEnabled={true}
       />
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#020617',
+  },
+  container: {
+    flex: 1,
+  },
+  webview: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    opacity: 0,
+  }
+});

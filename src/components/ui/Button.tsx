@@ -76,7 +76,16 @@ const styles = StyleSheet.create({
   mdContainer: { paddingHorizontal: 24, paddingVertical: 8 }, // px-6 py-2
   mdText: { fontSize: 16 }, // text-base
   
-  lgContainer: { paddingHorizontal: 40, paddingVertical: 16 }, // px-10 py-4
-  lgText: { fontSize: 20 }, // text-xl
+  lgContainer: {
+  minWidth: 260,
+  minHeight: 64,
+  paddingHorizontal: 40,
+  paddingVertical: 16,
+},
+
+lgText: {
+  fontSize: 20,
+  fontWeight: '700',
+},
 });
 

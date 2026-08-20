@@ -1,11 +1,12 @@
 // src/features/match/view/GameLocalView.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Pressable, Animated } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 // Componentes da Nova Arquitetura Limpa
 import { PlayerPanel } from '@/components/board/PlayerPanel';
 import { MatchBoardArea } from '@/components/board/MatchBoardArea';
+import { ScreenLayout } from '@/components/layout/ScreenLayout'; // <-- Import do Layout
 
 // Hooks e Stores
 import { useAuthStore } from '@/store/authStore'; 
@@ -26,15 +27,12 @@ export function GameLocal() {
     }
   }, [partidaData, navigation]);
 
-  // Consome todo o estado do orquestrador
   const matchState = useMatch(partidaData, currentUser, undefined, isEvalBarEnabled);
 
   const [autoFlip, setAutoFlip] = useState(true);
 
-  // 1. Instanciamos a animação baseada no estado inicial
   const rotateAnim = useRef(new Animated.Value(autoFlip ? 1 : 0)).current;
 
-  // 2. Disparamos a animação de 500ms sempre que o autoFlip mudar
   useEffect(() => {
     Animated.timing(rotateAnim, {
       toValue: autoFlip ? 1 : 0,
@@ -43,7 +41,6 @@ export function GameLocal() {
     }).start();
   }, [autoFlip]);
 
-  // 3. Interpolamos o número puro para graus
   const rotateInterpolate = rotateAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '180deg']
@@ -51,7 +48,6 @@ export function GameLocal() {
 
   if (!partidaData || !currentUser) return null;
 
-  // Lógica de Orientação Dinâmica
   const boardOrientation = autoFlip ? (matchState.minhaCor === 'branca' ? 'white' : 'black') : 'white'; 
   const bottomColor = boardOrientation === 'white' ? 'branca' : 'preta';
   const topColor = boardOrientation === 'white' ? 'preta' : 'branca';
@@ -67,7 +63,8 @@ export function GameLocal() {
   const clockTop = useChessClock(topColor === 'branca' ? matchState.tempoBrancas : matchState.tempoPretas, isTopTurn, isFimDeJogo);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    // Substituímos o SafeAreaView pelo ScreenLayout com noPadding
+    <ScreenLayout noPadding>
       <View style={styles.container}>
         <View style={styles.content}>
           
@@ -76,7 +73,6 @@ export function GameLocal() {
             style={[
               styles.hudWrapper,
               isTopTurn ? styles.activeBorder : styles.inactiveBorder,
-              // Aplicamos a interpolação aqui
               { transform: [{ rotate: rotateInterpolate }] } 
             ]}
           >
@@ -155,32 +151,29 @@ export function GameLocal() {
 
         </View>
       </View>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#020617', // bg-slate-950
-  },
+  // Classe safeArea deletada!
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16, // p-4
+    padding: 16, 
   },
   content: {
     width: '100%',
-    maxWidth: 480, // max-w-[480px]
-    gap: 12, // gap-3
+    maxWidth: 480, 
+    gap: 12, 
   },
   hudWrapper: {
-    borderRadius: 12, // rounded-xl
+    borderRadius: 12, 
     borderWidth: 1,
   },
   activeBorder: {
-    borderColor: 'rgba(59, 130, 246, 0.5)', // border-blue-500/50
+    borderColor: 'rgba(59, 130, 246, 0.5)', 
   },
   inactiveBorder: {
     borderColor: 'transparent',
@@ -190,24 +183,23 @@ const styles = StyleSheet.create({
   },
   toggleButton: {
     width: '100%',
-    paddingVertical: 12, // py-3
-    borderRadius: 12, // rounded-xl
-    backgroundColor: '#0f172a', // bg-slate-900
+    paddingVertical: 12, 
+    borderRadius: 12, 
+    backgroundColor: '#0f172a', 
     borderWidth: 1,
-    borderColor: '#334155', // border-slate-700
+    borderColor: '#334155', 
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
   },
   toggleButtonPressed: {
-    backgroundColor: '#1e293b', // Efeito hover
+    backgroundColor: '#1e293b', 
   },
   toggleButtonText: {
-    fontSize: 12, // text-xs
+    fontSize: 12, 
     fontWeight: 'bold',
     textTransform: 'uppercase',
-    letterSpacing: 1.5, // tracking-widest
-    color: '#94a3b8', // text-slate-400
+    letterSpacing: 1.5, 
+    color: '#94a3b8', 
   }
 });
-

@@ -1,12 +1,13 @@
 // src/features/gamemode/view/GameModeView.tsx
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 import { UserProfileWidget } from '@/components/ui/UserProfileWidget';
 import { useAuthStore } from '@/store/authStore';
+import { ScreenLayout } from '@/components/layout/ScreenLayout'; // <-- Import do Layout
 
 export function GameModeView() {
   const navigation = useNavigation<any>();
@@ -18,15 +19,15 @@ export function GameModeView() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    // Substituindo o SafeAreaView raiz pelo nosso ScreenLayout
+    <ScreenLayout>
       <View style={styles.container}>
         
         {/* Navegação Superior */}
         <View style={styles.header}>
-          {/* Envolvemos a Logo em um Pressable para ser tocável */}
           <Pressable 
-            onPress={() => navigation.navigate('Dashboard')} // '/' geralmente é a Dashboard
-            style={({ pressed }) => [pressed && { opacity: 0.7 }]} // Leve feedback visual
+            onPress={() => navigation.navigate('Dashboard')} 
+            style={({ pressed }) => [pressed && { opacity: 0.7 }]} 
           >
             <Logo size="sm" />
           </Pressable>
@@ -36,7 +37,7 @@ export function GameModeView() {
             rating={user?.rating || 1500}
             iniciais={getIniciais(user?.nome)}
             foto={user?.foto}
-            onPress={() => navigation.navigate('Profile')} // Atualizado para onPress
+            onPress={() => navigation.navigate('Profile')} 
           />
         </View>
 
@@ -59,7 +60,6 @@ export function GameModeView() {
               label="Jogar contra Bots" 
               size="lg" 
               variant="primary"
-              // Usamos a prop style que preparamos no Button.tsx para forçar o tamanho
               style={styles.gameModeButton} 
               onPress={() => navigation.navigate('Bots')} 
             />
@@ -78,7 +78,6 @@ export function GameModeView() {
               variant="secondary"
               style={styles.gameModeButton}
               onPress={() => {
-                // TODO: Redirecionar para o lobby/matchmaking
                 console.log('Modo Multiplayer selecionado');
               }} 
             />
@@ -86,63 +85,58 @@ export function GameModeView() {
 
         </View>
       </View>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#020617', // bg-slate-950
-  },
+  // Removi a classe 'safeArea' que não é mais necessária
   container: {
-    flex: 1, // min-h-[80vh] substituído por tela cheia
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    flex: 1, 
+    // Removi os paddings duplos (horizontal e top)
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 40, // mb-16
+    marginBottom: 40, 
   },
   main: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center', // Isso garante que os botões fiquem perfeitamente centralizados verticalmente
     width: '100%',
-    alignSelf: 'center', // mx-auto
+    alignSelf: 'center', 
   },
   titleContainer: {
     alignItems: 'center',
-    marginBottom: 40, // Espaçamento entre texto e botões (gap-10)
+    marginBottom: 40, 
   },
   title: {
-    fontSize: 36, // text-3xl md:text-5xl
-    fontWeight: '900', // font-black
+    fontSize: 36, 
+    fontWeight: '900', 
     color: '#ffffff',
-    marginBottom: 16, // mb-4
+    marginBottom: 16, 
     textAlign: 'center',
     letterSpacing: -1,
   },
   highlight: {
-    color: '#88c425', // text-chess-green
+    color: '#88c425', 
   },
   subtitle: {
-    color: '#94a3b8', // text-slate-400
+    color: '#94a3b8', 
     fontSize: 16,
     textAlign: 'center',
     maxWidth: 320,
   },
   buttonGroup: {
     width: '100%',
-    maxWidth: 400, // max-w-md
-    gap: 16, // flex flex-col gap-4
+    maxWidth: 400, 
+    gap: 16, 
   },
   gameModeButton: {
     width: '100%',
-    paddingVertical: 20, // Simulando o py-5
+    paddingVertical: 20, 
   }
 });
-

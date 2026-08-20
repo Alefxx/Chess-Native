@@ -1,6 +1,6 @@
 // src/features/timeselection/view/TimeView.tsx
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Pressable, Animated, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Animated, ActivityIndicator } from 'react-native';
 import { ArrowLeft, Clock, Activity } from 'lucide-react-native';
 
 import { IconButton } from '@/components/ui/IconButton';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { ColorSelector } from '@/components/ui/ColorSelector';
 import { TimeCard } from '@/components/ui/TimeCard';
 import { useTime } from '../hooks/useTime'; 
+import { ScreenLayout } from '@/components/layout/ScreenLayout'; // <-- Import do nosso Layout Profissional!
 
 export function TimeView() {
   const {
@@ -30,31 +31,31 @@ export function TimeView() {
 
   const isMultiplayer = false; 
 
-  // Animação nativa para deslizar a "bolinha" do switch
   const switchAnim = useRef(new Animated.Value(isEvalBarEnabled ? 1 : 0)).current;
 
   useEffect(() => {
     Animated.timing(switchAnim, {
       toValue: isEvalBarEnabled ? 1 : 0,
       duration: 200,
-      useNativeDriver: false, // translateX em alguns casos pede false no Android para layout em container pequeno
+      useNativeDriver: false, 
     }).start();
   }, [isEvalBarEnabled]);
 
   const thumbTranslateX = switchAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [2, 22] // Margem esquerda (desligado) vs transladado para direita (ligado)
+    outputRange: [2, 22] 
   });
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    // Substituímos o SafeAreaView e a View root pelo nosso ScreenLayout
+    <ScreenLayout>
       <View style={styles.container}>
         
         {/* Cabeçalho */}
         <View style={styles.header}>
           <IconButton 
             icon={<ArrowLeft size={24} color="#ffffff" />} 
-            onPress={() => navigation.goBack()} // Atualizado de navigate(-1)
+            onPress={() => navigation.goBack()} 
           />
           <View style={styles.headerTextContainer}>
             <Text style={styles.title}>
@@ -168,13 +169,13 @@ export function TimeView() {
         )}
 
       </View>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#020617' },
-  container: { flex: 1, width: '100%', maxWidth: 896, alignSelf: 'center', paddingHorizontal: 16, paddingTop: 16 },
+  // Removi a classe 'safeArea' que estava sobrando
+  container: { flex: 1, width: '100%', maxWidth: 896, alignSelf: 'center' }, // Removi os paddings repetidos daqui
   header: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 32 },
   headerTextContainer: { flex: 1 },
   title: { fontSize: 24, fontWeight: '900', color: '#ffffff', letterSpacing: -0.5 },
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
   errorText: { color: '#fecaca', textAlign: 'center' },
   
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
-  gridItem: { width: '31%' }, // Aproximadamente grid-cols-3
+  gridItem: { width: '31%' },
   
   toggleSection: { alignItems: 'center', marginTop: 8 },
   toggleCard: { width: '100%', maxWidth: 448, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: 'rgba(30, 41, 59, 0.5)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(51, 65, 85, 0.5)' },
@@ -210,6 +211,5 @@ const styles = StyleSheet.create({
   switchTrackOff: { backgroundColor: '#475569' },
   switchThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#ffffff', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 2, elevation: 2 },
 
-  footer: { paddingTop: 16, paddingBottom: 32, borderTopWidth: 1, borderTopColor: 'rgba(51, 65, 85, 0.5)', backgroundColor: '#020617' }
+  footer: { paddingTop: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: 'rgba(51, 65, 85, 0.5)' } // Ajustei o paddingBottom de 32 pra 16 pro botão não ficar tão alto
 });
-

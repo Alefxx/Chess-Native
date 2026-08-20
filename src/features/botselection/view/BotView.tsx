@@ -5,17 +5,16 @@ import {
   Text, 
   StyleSheet, 
   ScrollView, 
-  ActivityIndicator, 
-  SafeAreaView 
+  ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft } from 'lucide-react-native';
 
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
-// Lembre-se: o BotCard que refatoramos antes está na pasta ui ou botselection
 import { BotCard } from '@/components/ui/BotCard'; 
 import { Bot, botService } from '@/features/botselection/service/bot.service';
+import { ScreenLayout } from '@/components/layout/ScreenLayout'; // <-- Import do Layout Profissional!
 
 export function BotView() {
   const [bots, setBots] = useState<Bot[]>([]);
@@ -50,7 +49,8 @@ export function BotView() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    // Substituindo o SafeAreaView pelo nosso ScreenLayout
+    <ScreenLayout>
       <View style={styles.container}>
         
         {/* Cabeçalho de Navegação */}
@@ -85,14 +85,13 @@ export function BotView() {
               <Text style={styles.errorText}>{errorMsg}</Text>
             </View>
           ) : (
-            // A substituição do Grid-cols-2 por FlexWrap
             <View style={styles.grid}>
               {bots.map((bot) => (
                 <View key={bot.id} style={styles.gridItem}>
                   <BotCard 
                     bot={bot} 
                     isSelected={selectedBotId === bot.id}
-                    onPress={() => setSelectedBotId(bot.id)} // Atualizado para a prop onPress do RN
+                    onPress={() => setSelectedBotId(bot.id)} 
                   />
                 </View>
               ))}
@@ -113,54 +112,50 @@ export function BotView() {
         )}
 
       </View>
-    </SafeAreaView>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#020617', // Presumindo fundo escuro
-  },
+  // Classe safeArea removida
   container: {
     flex: 1,
     width: '100%',
-    maxWidth: 896, // max-w-4xl (para se alinhar bem em tablets se necessário)
+    maxWidth: 896, 
     alignSelf: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    // paddings duplicados removidos
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16, // gap-4
-    marginBottom: 32, // mb-8
+    gap: 16, 
+    marginBottom: 32, 
   },
   headerTextContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 24, // md:text-3xl
-    fontWeight: '900', // font-black
+    fontSize: 24, 
+    fontWeight: '900', 
     color: '#ffffff',
     letterSpacing: -0.5,
   },
   highlight: {
-    color: '#38bdf8', // text-analysis-blue
+    color: '#38bdf8', 
   },
   subtitle: {
-    color: '#94a3b8', // text-slate-400
-    fontSize: 14, // text-sm
+    color: '#94a3b8', 
+    fontSize: 14, 
     marginTop: 2,
   },
   scrollArea: {
-    flex: 1, // Faz a lista tomar todo o espaço disponível
+    flex: 1, 
   },
   scrollContent: {
-    paddingBottom: 24, // Espaçamento extra no fim da lista
+    paddingBottom: 24, 
   },
   centerState: {
-    paddingTop: 80, // py-20
+    paddingTop: 80, 
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -184,20 +179,17 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between', // Espalha as colunas para os cantos
-    rowGap: 16, // gap entre linhas
+    justifyContent: 'space-between', 
+    rowGap: 16, 
   },
   gridItem: {
-    // Calculado para dar exatamente 2 colunas com um pequeno espaço no meio.
-    // 48% permite que duas cartas caibam lado a lado confortavelmente.
     width: '48%', 
   },
   footer: {
     paddingTop: 16,
-    paddingBottom: 32, // pb-12
+    paddingBottom: 16, // Ajustado de 32 para 16
     borderTopWidth: 1,
-    borderTopColor: 'rgba(51, 65, 85, 0.5)', // Um divisor sutil
-    backgroundColor: '#020617', // Garante que o fundo não seja transparente
+    borderTopColor: 'rgba(51, 65, 85, 0.5)', 
+    // backgroundColor removido pois o ScreenLayout já garante o fundo certo
   }
 });
-
