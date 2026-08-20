@@ -77,15 +77,13 @@ const styles = StyleSheet.create({
   mdText: { fontSize: 16 }, // text-base
   
   lgContainer: {
-  minWidth: 260,
-  minHeight: 64,
-  paddingHorizontal: 40,
-  paddingVertical: 16,
-},
-
-lgText: {
-  fontSize: 20,
-  fontWeight: '700',
-},
+    minWidth: 260,
+    minHeight: 64,
+    paddingHorizontal: 40,
+    paddingVertical: 16,
+  },
+  lgText: {
+    fontSize: 20,
+    fontWeight: 'bold', // CORRIGIDO: string '700' trocada por 'bold' nativo
+  },
 });
-

@@ -64,32 +64,37 @@ export default function App() {
   `;
 
   return (
-    // initialMetrics garante que o Android calcule o tamanho da tela corretamente no primeiro frame
     <SafeAreaProvider style={styles.root} initialMetrics={initialWindowMetrics}> 
       <StatusBar style="light" /> 
       
-      {/* View forçando o roteador a preencher o espaço restante */}
+      {/* Container principal do aplicativo */}
       <View style={styles.container}>
         <AppRoutes />
       </View>
 
-      <WebView
-        ref={botWebViewRef}
-        source={{ html: stockfishHtml }}
-        onMessage={handleBotMessage}
-        onLoadEnd={handleBotLoad}
-        style={styles.webview} 
-        javaScriptEnabled={true}
-      />
+      {/* JAULA OFF-SCREEN: Joga os WebViews para fora da tela e anula cliques */}
+      <View style={styles.offScreenCage} pointerEvents="none">
+        <WebView
+          ref={botWebViewRef}
+          source={{ html: stockfishHtml }}
+          onMessage={handleBotMessage}
+          onLoadEnd={handleBotLoad}
+          style={styles.webview} 
+          javaScriptEnabled={true}
+          // Garante que o fundo do navegador nativo seja transparente
+          style={{ backgroundColor: 'transparent' }} 
+        />
 
-      <WebView
-        ref={analysisWebViewRef}
-        source={{ html: stockfishHtml }}
-        onMessage={handleAnalysisMessage}
-        onLoadEnd={handleAnalysisLoad}
-        style={styles.webview} 
-        javaScriptEnabled={true}
-      />
+        <WebView
+          ref={analysisWebViewRef}
+          source={{ html: stockfishHtml }}
+          onMessage={handleAnalysisMessage}
+          onLoadEnd={handleAnalysisLoad}
+          style={styles.webview} 
+          javaScriptEnabled={true}
+          style={{ backgroundColor: 'transparent' }}
+        />
+      </View>
     </SafeAreaProvider>
   );
 }
@@ -102,10 +107,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  webview: {
+  offScreenCage: {
     position: 'absolute',
-    width: 0,
-    height: 0,
+    top: -9999, // Joga pra quilômetros acima do topo do celular
+    left: -9999, // Joga pra quilômetros à esquerda
+    width: 10,   // Tamanho não-zero pro Android não "dormir" a tab
+    height: 10,
+    zIndex: -99, // Fica atrás de tudo
+    overflow: 'hidden',
     opacity: 0,
+  },
+  webview: {
+    width: 10,
+    height: 10,
   }
 });
+

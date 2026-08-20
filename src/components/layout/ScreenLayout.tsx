@@ -21,9 +21,9 @@ export function ScreenLayout({ children, noPadding = false, style }: ScreenLayou
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'red',
+    backgroundColor: 'black',
   },
-  inner: {
+ inner: {
     flex: 1,
   },
   defaultPadding: {

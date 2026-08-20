@@ -1,3 +1,4 @@
+// src/components/ui/Logo.tsx
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 
@@ -102,12 +103,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexShrink: 1,
   },
-
   text: {
-    fontWeight: '900',
+    fontWeight: 'bold', // CORRIGIDO: string '900' trocada por 'bold' nativo
     letterSpacing: -1,
   },
-
   dot: {
     backgroundColor: '#38bdf8',
     borderRadius: 999,
