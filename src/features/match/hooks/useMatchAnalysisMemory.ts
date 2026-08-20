@@ -74,7 +74,7 @@ export function useMatchAnalysisMemory({ partidaId, fenInicial, minhaCor }: UseM
     });
 
     // Agrupa as contagens
-    const stats = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const stats = { 0:0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     
     minhasAvaliacoes.forEach(codigo => {
       if (stats[codigo as keyof typeof stats] !== undefined) {

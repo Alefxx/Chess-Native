@@ -6,18 +6,18 @@ import { View, Image, StyleSheet } from 'react-native';
 // Assumindo que este arquivo está em src/components/pieces/
 // e as imagens estão em src/assets/pieces/
 export const pieceImages: Record<string, any> = {
-  'bP': require('../../assets/pieces/bP.png'),
-  'bR': require('../../assets/pieces/bR.png'),
-  'bN': require('../../assets/pieces/bN.png'),
-  'bB': require('../../assets/pieces/bB.png'),
-  'bQ': require('../../assets/pieces/bQ.png'),
-  'bK': require('../../assets/pieces/bK.png'),
-  'wP': require('../../assets/pieces/wP.png'),
-  'wR': require('../../assets/pieces/wR.png'),
-  'wN': require('../../assets/pieces/wN.png'),
-  'wB': require('../../assets/pieces/wB.png'),
-  'wQ': require('../../assets/pieces/wQ.png'),
-  'wK': require('../../assets/pieces/wK.png')
+  'bP': require('../../assets/pieces/bP.svg'),
+  'bR': require('../../assets/pieces/bR.svg'),
+  'bN': require('../../assets/pieces/bN.svg'),
+  'bB': require('../../assets/pieces/bB.svg'),
+  'bQ': require('../../assets/pieces/bQ.svg'),
+  'bK': require('../../assets/pieces/bK.svg'),
+  'wP': require('../../assets/pieces/wP.svg'),
+  'wR': require('../../assets/pieces/wR.svg'),
+  'wN': require('../../assets/pieces/wN.svg'),
+  'wB': require('../../assets/pieces/wB.svg'),
+  'wQ': require('../../assets/pieces/wQ.svg'),
+  'wK': require('../../assets/pieces/wK.svg')
 };
 
 interface ChessPieceProps {
