@@ -1,4 +1,5 @@
-import React from 'react';
+// src/components/board/MoveHistoryBoard.tsx
+import React, { useRef } from 'react'; // <-- Import corrigido e useRef adicionado
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Trophy } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
@@ -10,6 +11,9 @@ interface MoveHistoryBoardProps {
 }
 
 export function MoveHistoryBoard({ pgnHistory, onProporEmpate, onAbandonar }: MoveHistoryBoardProps) {
+  // Ref para controlar a rolagem da lista
+  const scrollViewRef = useRef<ScrollView>(null);
+
   const turnos = [];
   for (let i = 0; i < pgnHistory.length; i += 2) {
     turnos.push({
@@ -30,6 +34,9 @@ export function MoveHistoryBoard({ pgnHistory, onProporEmpate, onAbandonar }: Mo
       
       {/* Lista de Movimentos */}
       <ScrollView 
+        ref={scrollViewRef} // <-- Anexamos a referência aqui
+        // Sempre que um lance novo entrar, rola suavemente para o final!
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })} 
         style={styles.listContainer}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -38,7 +45,6 @@ export function MoveHistoryBoard({ pgnHistory, onProporEmpate, onAbandonar }: Mo
           <Text style={styles.emptyText}>Aguardando o primeiro lance...</Text>
         ) : (
           turnos.map((turno) => (
-            // Flex row substitui o Grid
             <View key={turno.numero} style={styles.row}>
               <Text style={styles.colNumber}>{turno.numero}.</Text>
               <Text style={styles.colMoveWhite}>{turno.brancas}</Text>
@@ -50,13 +56,10 @@ export function MoveHistoryBoard({ pgnHistory, onProporEmpate, onAbandonar }: Mo
 
       {/* Ações da Partida */}
       <View style={styles.actionsContainer}>
-        {/* Envolvemos os botões em Views com flex: 1 para terem larguras iguais, 
-            simulando o grid-cols-2 */}
         <View style={{ flex: 1 }}>
           <Button 
             label="Empate" 
             variant="secondary" 
-            // no RN, se quiser um botão menor, ajuste as props internas dele
             onPress={onProporEmpate}
           />
         </View>
@@ -74,28 +77,28 @@ export function MoveHistoryBoard({ pgnHistory, onProporEmpate, onAbandonar }: Mo
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, // flex-1
-    backgroundColor: '#1e293b', // bg-slate-800
-    borderRadius: 12, // rounded-xl
+    flex: 1, 
+    backgroundColor: '#1e293b', 
+    borderRadius: 12, 
     borderWidth: 1,
-    borderColor: '#334155', // border-slate-700
-    padding: 16, // p-4
+    borderColor: '#334155', 
+    padding: 16, 
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8, // gap-2
-    marginBottom: 16, // mb-4
-    paddingBottom: 8, // pb-2
+    gap: 8, 
+    marginBottom: 16, 
+    paddingBottom: 8, 
     borderBottomWidth: 1,
     borderBottomColor: '#334155',
   },
   headerText: {
-    color: '#94a3b8', // text-slate-400
-    fontWeight: 'bold',
+    color: '#94a3b8', 
+    fontWeight: 'bold', // Seguro no Android
     textTransform: 'uppercase',
-    fontSize: 12, // text-xs
-    letterSpacing: 1.5, // tracking-widest (aproximado)
+    fontSize: 12, 
+    letterSpacing: 1.5, 
   },
   listContainer: {
     flex: 1,
@@ -106,40 +109,39 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4, // py-1
+    paddingVertical: 4, 
   },
   colNumber: {
-    width: 40, // Substitui o 30px do grid, demos um pouquinho a mais pro mobile
-    color: '#64748b', // text-slate-500
-    fontFamily: 'monospace', // font-mono
+    width: 40, 
+    color: '#64748b', 
+    fontFamily: 'monospace', // Perfeito, o Android tem fonte mono nativa padrão
     fontSize: 14,
   },
   colMoveWhite: {
-    flex: 1, // 1fr do grid
+    flex: 1, 
     fontWeight: 'bold',
-    color: '#cbd5e1', // text-slate-300
+    color: '#cbd5e1', 
     fontFamily: 'monospace',
     fontSize: 14,
   },
   colMoveBlack: {
-    flex: 1, // 1fr do grid
-    color: '#94a3b8', // text-slate-400
+    flex: 1, 
+    color: '#94a3b8', 
     fontFamily: 'monospace',
     fontSize: 14,
   },
   emptyText: {
     textAlign: 'center',
-    color: '#64748b', // text-slate-500
+    color: '#64748b', 
     fontStyle: 'italic',
     marginTop: 16,
   },
   actionsContainer: {
-    marginTop: 16, // mt-4
-    paddingTop: 16, // pt-4
+    marginTop: 16, 
+    paddingTop: 16, 
     borderTopWidth: 1,
     borderTopColor: '#334155',
     flexDirection: 'row',
-    gap: 8, // grid-cols-2 gap-2 (flex row com gap atende perfeitamente)
+    gap: 8, 
   }
 });
-

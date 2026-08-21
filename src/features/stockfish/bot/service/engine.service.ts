@@ -44,7 +44,7 @@ export class EngineService {
       const posicaoFen = fen === 'start' 
         ? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' 
         : fen;
-        
+      this.sendMessageToEngine('ucinewgame'); 
       this.sendMessageToEngine(`position fen ${posicaoFen}`);
       this.sendMessageToEngine(`go depth ${depth}`);
     });

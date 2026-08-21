@@ -6,7 +6,7 @@ import { WebView } from 'react-native-webview';
 import { View, StyleSheet } from 'react-native';
 
 import { AppRoutes } from './src/routes/AppRoutes';
-import { engineService } from './src/features/bot/service/engine.service';
+import { engineService } from './src/features/stockfish/bot/service/engine.service';
 import { analysisService } from './src/features/stockfish/analysis/service/analysis.service';
 
 export default function App() {
@@ -14,54 +14,30 @@ export default function App() {
   const analysisWebViewRef = useRef<WebView>(null);
 
   const handleBotMessage = (event: any) => {
+    console.log("🤖 [BOT DISSE]:", event.nativeEvent.data);
     engineService.receiveMessageFromEngine(event.nativeEvent.data);
   };
 
   const handleBotLoad = () => {
+    console.log("🌐 [WEBVIEW BOT]: Página do Netlify carregada!");
     engineService.sendMessageToEngine = (msg: string) => {
-      botWebViewRef.current?.injectJavaScript(`if (typeof stockfish !== 'undefined') { stockfish.postMessage('${msg}'); } true;`);
+      // Agora o envio é direto e limpo usando postMessage nativo
+      botWebViewRef.current?.postMessage(msg);
     };
     engineService.initEngine();
   };
 
   const handleAnalysisMessage = (event: any) => {
+    console.log("🔎 [ANALYSIS DISSE]:", event.nativeEvent.data);
     analysisService.receiveMessageFromEngine(event.nativeEvent.data);
   };
 
   const handleAnalysisLoad = () => {
+    console.log("🌐 [WEBVIEW ANALYSIS]: Página do Netlify carregada!");
     analysisService.sendMessageToEngine = (msg: string) => {
-      analysisWebViewRef.current?.injectJavaScript(`if (typeof stockfish !== 'undefined') { stockfish.postMessage('${msg}'); } true;`);
+      analysisWebViewRef.current?.postMessage(msg);
     };
   };
-
-  const stockfishHtml = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <script>
-          async function initStockfish() {
-            try {
-              const response = await fetch('https://unpkg.com/stockfish.js@10.0.2/stockfish.js');
-              const scriptText = await response.text();
-              const blob = new Blob([scriptText], { type: 'application/javascript' });
-              const blobUrl = URL.createObjectURL(blob);
-              
-              window.stockfish = new Worker(blobUrl);
-              window.stockfish.onmessage = function(event) {
-                window.ReactNativeWebView.postMessage(event.data);
-              };
-              
-              window.ReactNativeWebView.postMessage('uciok');
-            } catch (e) {
-              window.ReactNativeWebView.postMessage('ERRO: ' + e.message);
-            }
-          }
-          initStockfish();
-        </script>
-      </head>
-      <body></body>
-    </html>
-  `;
 
   return (
     <SafeAreaProvider style={styles.root} initialMetrics={initialWindowMetrics}> 
@@ -76,23 +52,20 @@ export default function App() {
       <View style={styles.offScreenCage} pointerEvents="none">
         <WebView
           ref={botWebViewRef}
-          source={{ html: stockfishHtml }}
+          source={{ uri: 'https://webfishh.netlify.app/' }}
           onMessage={handleBotMessage}
           onLoadEnd={handleBotLoad}
-          style={styles.webview} 
           javaScriptEnabled={true}
-          // Garante que o fundo do navegador nativo seja transparente
-          style={{ backgroundColor: 'transparent' }} 
+          style={[styles.webview, { backgroundColor: 'transparent' }]} 
         />
 
         <WebView
           ref={analysisWebViewRef}
-          source={{ html: stockfishHtml }}
+          source={{ uri: 'https://webfishh.netlify.app/' }}
           onMessage={handleAnalysisMessage}
           onLoadEnd={handleAnalysisLoad}
-          style={styles.webview} 
           javaScriptEnabled={true}
-          style={{ backgroundColor: 'transparent' }}
+          style={[styles.webview, { backgroundColor: 'transparent' }]}
         />
       </View>
     </SafeAreaProvider>
@@ -122,4 +95,3 @@ const styles = StyleSheet.create({
     height: 10,
   }
 });
-

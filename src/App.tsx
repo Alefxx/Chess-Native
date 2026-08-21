@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
 import { AppRoutes } from './src/routes/AppRoutes';
-import { engineService } from './src/features/bot/service/engine.service';
+import { engineService } from './src/features/stockfish/bot/service/engine.service';
 import { analysisService } from './src/features/stockfish/analysis/service/analysis.service';
 
 export default function App() {

@@ -12,14 +12,9 @@ interface UseStockfishProps {
   isGameOver: boolean;
   isPendingPromotion: boolean;
   botOponente?: Bot;
-  
-  // ATUALIZADO: Adicionamos o moveRealizado para repassar a origem e destino da jogada
   onBotMoveSuccess: (response: any, moveRealizado: { origem: string, destino: string }) => void; 
 }
 
-/**
- * Hook responsável por monitorar o turno do bot e executar sua lógica de decisão.
- */
 export function useStockfishMatch({
   partidaId,
   gameFen,
@@ -31,57 +26,53 @@ export function useStockfishMatch({
   onBotMoveSuccess
 }: UseStockfishProps) {
   
-  // Estado para evitar requisições duplicadas enquanto o motor processa o lance
   const [isBotThinking, setIsBotThinking] = useState(false);
 
   useEffect(() => {
     const fazerJogadaBot = async () => {
-      /**
-       * Condições de execução: 
-       * 1. Não ser a vez do humano.
-       * 2. Existir um bot configurado.
-       * 3. Bot não estar processando.
-       * 4. O jogo estar ativo (sem mate ou promoção pendente).
-       */
       const podeJogar = !isMinhaVez && botOponente && !isBotThinking && 
                         !gameFen.includes('game over') && !isGameOver && !isPendingPromotion;
 
       if (podeJogar) {
+        
+        // =========================================================
+        // A CORREÇÃO ESTÁ AQUI: O LAÇO DE ESPERA DA INTERNET
+        // Se o Netlify ainda estiver carregando, espera 500ms e tenta de novo
+        // =========================================================
+        if (!engineService.isReady || !engineService.sendMessageToEngine) {
+          console.log("[BOT] Aguardando o motor carregar na nuvem...");
+          setTimeout(fazerJogadaBot, 500);
+          return;
+        }
+
         setIsBotThinking(true); 
         
         try {
-          // =========================================================
-          // DELAY ADICIONADO: Aguarda 1 segundo antes de processar
-          // Simula o tempo de "raciocínio" para não ser instantâneo
-          // =========================================================
+          // Delay extra de "raciocínio" para parecer natural
           await new Promise(resolve => setTimeout(resolve, 1000));
 
           const config = botOponente.configStockfish;
-          // Solicita o melhor lance para o motor Stockfish
           const bestMove = await engineService.getBestMove(gameFen, config.depth, config.skillLevel); 
           
           if (bestMove) {
-            // Decompõe a string do lance (ex: "e2e4" ou "e7e8q")
             const origem = bestMove.substring(0, 2);
             const destino = bestMove.substring(2, 4);
-            
-            // Verifica se há um caractere de promoção no final da string
             const pecaPromocao = bestMove.length === 5 ? bestMove[4] : undefined; 
             const corBot = minhaCor === 'branca' ? 'preta' : 'branca';
 
-            // Envia o lance calculado para o servidor validar e persistir
             const payloadBot: any = { origem, destino, corDoTurnoAtual: corBot };
             if (pecaPromocao) payloadBot.pecaPromovida = pecaPromocao;
 
             const response = await matchService.executarMovimento(partidaId, payloadBot);
 
             if (response.sucesso && response.fen) {
-              // ATUALIZADO: Envia a origem e destino extraídos do lance do bot (bestMove)
               onBotMoveSuccess(response, { origem, destino });
             }
           }
-        } catch (error) {
-          console.error("[BOT] Erro ao processar turno da IA:", error);
+        } catch (error: any) {
+          // Desembrulhando o erro para aparecer bonitinho no seu terminal do Termux
+          const erroReal = error.response?.data || error.message || error;
+          console.error("[BOT] 🚨 Erro detalhado da IA:", erroReal);
         } finally {
           setIsBotThinking(false); 
         }
@@ -89,7 +80,9 @@ export function useStockfishMatch({
     };
 
     fazerJogadaBot();
-  }, [gameFen, isMinhaVez, minhaCor, partidaId, botOponente, isBotThinking, isGameOver, isPendingPromotion, onBotMoveSuccess]);
+    
+    // Removendo o isBotThinking do array para evitar loops infinitos de renderização
+  }, [gameFen, isMinhaVez, minhaCor, partidaId, botOponente, isGameOver, isPendingPromotion, onBotMoveSuccess]);
 
   return { isBotThinking };
 }

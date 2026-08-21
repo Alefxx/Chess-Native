@@ -1,6 +1,6 @@
+// src/components/board/MatchBoardArea.tsx
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-// Substituímos o react-router-dom pela navegação nativa
 import { useNavigation } from '@react-navigation/native'; 
 
 import { CustomChessboard } from '@/components/board/CustomChessboard'; 
@@ -16,7 +16,6 @@ interface MatchBoardAreaProps {
   gameFen: string;
   isCheck: boolean;
   lastMove: { origem: string; destino: string } | null;
-  // ATUALIZADO: CSSProperties vira ViewStyle
   moveSquares: Record<string, ViewStyle>; 
   
   onSquareClick: (square: string) => void;
@@ -68,11 +67,9 @@ export function MatchBoardArea({
   moveCoordsHistory
 }: MatchBoardAreaProps) {
   
-  // Instanciamos o hook de navegação (tipado como any aqui para simplificar)
   const navigation = useNavigation<any>();
 
-  // A função de merge de estilos continua praticamente igual,
-  // só atualizamos a tipagem. O backgroundColor 'rgba' funciona nativamente!
+  // A função de merge de estilos mescla as casas válidas com a casa do último lance
   const getCombinedStyles = () => {
     const styles: Record<string, ViewStyle> = { ...moveSquares }; 
 
@@ -115,7 +112,7 @@ export function MatchBoardArea({
           customSquareStyles={getCombinedStyles()}
         />
 
-        {/* Modal de Promoção */}
+        {/* Modal de Promoção preso na área do tabuleiro */}
         {pendingPromotion && (
           <PromotionModal 
             cor={minhaCor}
@@ -126,7 +123,7 @@ export function MatchBoardArea({
           />
         )}
 
-        {/* Modal de Fim de Jogo */}
+        {/* Modal de Fim de Jogo (Fura o bloqueio da tela usando Modal Nativo) */}
         {gameOver && (
           <GameOverModal 
             vencedor={gameOver.vencedor}
@@ -135,10 +132,8 @@ export function MatchBoardArea({
             progressoFila={progressoFila}
             stats={minhasEstatisticas}
             onAvaliar={() => iniciarAvaliacaoFimDeJogo()}
-            
-            // ATUALIZADO: Uso do navigation.navigate
             onVerNoTabuleiro={() => {
-              navigation.navigate('Analysis', { // Passa o nome da Rota configurada no React Navigation
+              navigation.navigate('Analysis', { 
                 partidaData,
                 botOponente,
                 minhaCor,
@@ -150,7 +145,7 @@ export function MatchBoardArea({
             }}
             onClose={() => {
               pararAvaliacao();
-              navigation.navigate('Dashboard'); // Rota do painel inicial
+              navigation.navigate('Dashboard'); 
             }} 
           />
         )}
@@ -163,18 +158,17 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     maxWidth: 640,
-    alignSelf: 'center', // mx-auto
-    marginTop: 16, // mt-4
-    flexDirection: 'row', // O web 'flex' (com divs) cria colunas lado a lado, no mobile precisamos forçar
-    gap: 8, // md:gap-3 (adotei um meio termo confortável para telas móveis)
-    alignItems: 'stretch', // itens esticam para ter a mesma altura
+    alignSelf: 'center', 
+    marginTop: 16, 
+    flexDirection: 'row', 
+    gap: 8, 
+    alignItems: 'stretch', 
   },
   evalBarWrapper: {
     flexShrink: 0,
   },
   boardWrapper: {
     flex: 1,
-    // position: 'relative' é o padrão no React Native, então não precisamos declarar
+    justifyContent: 'center', // Centraliza o tabuleiro verticalmente no espaço livre
   }
 });
-
