@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 
 import { AppRoutes } from './src/routes/AppRoutes';
 import { engineService } from './src/features/stockfish/bot/service/engine.service';
@@ -14,12 +14,10 @@ export default function App() {
   const analysisWebViewRef = useRef<WebView>(null);
 
   const handleBotMessage = (event: any) => {
-    console.log("🤖 [BOT DISSE]:", event.nativeEvent.data);
     engineService.receiveMessageFromEngine(event.nativeEvent.data);
   };
 
   const handleBotLoad = () => {
-    console.log("🌐 [WEBVIEW BOT]: Página do Netlify carregada!");
     engineService.sendMessageToEngine = (msg: string) => {
       // Agora o envio é direto e limpo usando postMessage nativo
       botWebViewRef.current?.postMessage(msg);
@@ -28,15 +26,14 @@ export default function App() {
   };
 
   const handleAnalysisMessage = (event: any) => {
-    console.log("🔎 [ANALYSIS DISSE]:", event.nativeEvent.data);
     analysisService.receiveMessageFromEngine(event.nativeEvent.data);
   };
 
   const handleAnalysisLoad = () => {
-    console.log("🌐 [WEBVIEW ANALYSIS]: Página do Netlify carregada!");
     analysisService.sendMessageToEngine = (msg: string) => {
       analysisWebViewRef.current?.postMessage(msg);
     };
+    analysisService.sendMessageToEngine('uci');
   };
 
   return (
@@ -49,7 +46,12 @@ export default function App() {
       </View>
 
       {/* JAULA OFF-SCREEN: Joga os WebViews para fora da tela e anula cliques */}
-      <View style={styles.offScreenCage} pointerEvents="none">
+      {Platform.OS !== 'web' && <View
+        style={styles.offScreenCage}
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
         <WebView
           ref={botWebViewRef}
           source={{ uri: 'https://webfishh.netlify.app/' }}
@@ -67,7 +69,7 @@ export default function App() {
           javaScriptEnabled={true}
           style={[styles.webview, { backgroundColor: 'transparent' }]}
         />
-      </View>
+      </View>}
     </SafeAreaProvider>
   );
 }

@@ -1,6 +1,6 @@
 // src/screens/MatchAnalysis.tsx
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, ViewStyle, useWindowDimensions } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { LogOut } from 'lucide-react-native';
 
@@ -34,6 +34,7 @@ export function MatchAnalysis() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const currentUser = useAuthStore((state) => state.user);
+  const { width, height } = useWindowDimensions();
 
   // Coleta de parâmetros nativa
   const partidaData = route.params?.partidaData;
@@ -63,6 +64,10 @@ export function MatchAnalysis() {
 
   if (!partidaData || !currentUser) return null;
 
+  const isPlayerWhite = minhaCor === 'branca';
+  const opponentName = isPlayerWhite ? partidaData.jogadores.pretas : partidaData.jogadores.brancas;
+  const boardSize = Math.floor(Math.min(width - 72, Math.max(220, height * 0.44), 520));
+
   const currentQualityCode = currentMoveIndex > 0 ? avaliacoesLocais[currentMoveIndex - 1] : null;
   const currentQuality = (currentQualityCode !== null && currentQualityCode !== undefined) 
     ? QUALITY_MAP[currentQualityCode] 
@@ -80,13 +85,17 @@ export function MatchAnalysis() {
   return (
     // Substituindo SafeAreaView pelo ScreenLayout com noPadding
     <ScreenLayout noPadding>
-      <View style={styles.container}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         
         {/* Bloco 1: Adversário */}
         <View style={styles.playerBlock}>
           <View style={styles.playerHeader}>
             <UserProfileWidget 
-              nome={partidaData.jogadores.pretas} 
+              nome={opponentName}
               rating={botOponente?.rating || 1500} 
               iniciais="OP" 
               foto={botOponente?.foto}
@@ -100,19 +109,22 @@ export function MatchAnalysis() {
 
         {/* Bloco 2: Tabuleiro + EvalBar */}
         <View style={styles.boardWrapper}>
-          <View style={styles.evalBarContainer}>
+          <View style={[styles.evalBarContainer, { height: boardSize }]}>
             <EvalBar vantagemBrancas={vantagemBrancas} isMate={isMate} isInvertida={minhaCor === 'preta'} />
           </View>
 
-          <View style={styles.boardContainer}>
-            <CheckAlert isCheck={isCheck} />
+          <View style={[styles.boardContainer, { width: boardSize }]}>
+            <View style={{ width: boardSize, height: boardSize }}>
+            <CheckAlert isCheck={isCheck} shouldVibrate={false} />
 
             <CustomChessboard 
               fen={gameFen} 
               boardOrientation={minhaCor === 'branca' ? 'white' : 'black'}
               onSquareClick={() => {}} // Tabuleiro travado durante análise
               customSquareStyles={getCombinedStyles()}
+              disabled
             />
+            </View>
 
             {/* Controles de Navegação da Análise */}
             <View style={styles.controlsWrapper}>
@@ -160,6 +172,7 @@ export function MatchAnalysis() {
               nome={currentUser.nome} 
               rating={currentUser.rating} 
               iniciais={currentUser.nome.substring(0,2).toUpperCase()} 
+              foto={currentUser.foto}
             />
           </View>
         </View>
@@ -168,35 +181,38 @@ export function MatchAnalysis() {
         <View style={styles.footer}>
           <MoveHistoryBoard 
             pgnHistory={moveHistory} 
-            onProporEmpate={() => {}} 
-            onAbandonar={() => {}}   
+            showActions={false}
+            onMovePress={goToMove}
+            style={styles.history}
           />
           
           <View style={styles.exitWrapper}>
             <Button 
               label="Sair da Análise" 
               variant="danger" 
-              onPress={() => navigation.navigate('Dashboard')}
+              onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] })}
               icon={<LogOut size={18} color="#fff" />}
             />
           </View>
         </View>
         
-      </View>
+      </ScrollView>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  // safeArea removido
+  scroll: { flex: 1 },
   container: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 8, // Mantemos o padding mais justo para sobrar espaço pro Tabuleiro
     paddingVertical: 16,
     gap: 8,
   },
   playerBlock: {
-    zIndex: 10,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
   playerHeader: {
     flexDirection: 'row',
@@ -222,12 +238,13 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     gap: 8,
     zIndex: 20,
+    justifyContent: 'center',
   },
   evalBarContainer: {
     flexShrink: 0,
   },
   boardContainer: {
-    flex: 1,
+    flexShrink: 0,
     position: 'relative',
   },
   controlsWrapper: {
@@ -279,10 +296,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   footer: {
-    flex: 1, 
     gap: 8,
     marginTop: 8,
   },
+  history: { height: 220 },
   exitWrapper: {
     marginTop: 'auto',
   }

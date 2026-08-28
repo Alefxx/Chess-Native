@@ -12,13 +12,13 @@ interface UserProfileWidgetProps {
 
 export function UserProfileWidget({ nome, rating, iniciais, foto, onPress }: UserProfileWidgetProps) {
   
-  // Se existir onPress, renderizamos um Pressable, caso contrário, uma View estática
-  const Container = onPress ? Pressable : View;
-
   return (
-    <Container 
+    <Pressable
       onPress={onPress} 
-      style={({ pressed }: any) => [
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={onPress ? `Abrir perfil de ${nome}` : undefined}
+      style={({ pressed }) => [
         styles.container,
         onPress && styles.interactiveContainer,
         pressed && styles.pressed
@@ -42,7 +42,7 @@ export function UserProfileWidget({ nome, rating, iniciais, foto, onPress }: Use
           <Text style={styles.initials}>{iniciais}</Text>
         )}
       </View>
-    </Container>
+    </Pressable>
   );
 }
 

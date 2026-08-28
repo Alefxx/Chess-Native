@@ -1,5 +1,5 @@
 // src/components/board/MatchBoardArea.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; 
 
@@ -12,6 +12,8 @@ import { EvalBar } from '@/components/board/EvalBar';
 interface MatchBoardAreaProps {
   isEvalBarEnabled: boolean;
   minhaCor: 'branca' | 'preta';
+  boardOrientation?: 'white' | 'black';
+  boardSize: number;
   
   gameFen: string;
   isCheck: boolean;
@@ -22,7 +24,6 @@ interface MatchBoardAreaProps {
   realizarMovimento: (origem: string, destino: string, peca?: string) => void;
   
   pendingPromotion: { origem: string; destino: string } | null;
-  setPendingPromotion: (prom: { origem: string; destino: string } | null) => void;
   
   vantagemBrancas: number;
   isMate: boolean;
@@ -39,11 +40,14 @@ interface MatchBoardAreaProps {
   avaliacoesLocais: any;
   fenHistory: any;
   moveCoordsHistory: any;
+  isMovePending?: boolean;
 }
 
 export function MatchBoardArea({
   isEvalBarEnabled,
   minhaCor,
+  boardOrientation,
+  boardSize,
   gameFen,
   isCheck,
   lastMove,
@@ -51,7 +55,6 @@ export function MatchBoardArea({
   onSquareClick,
   realizarMovimento,
   pendingPromotion,
-  setPendingPromotion,
   vantagemBrancas,
   isMate,
   gameOver,
@@ -64,13 +67,14 @@ export function MatchBoardArea({
   moveHistory,
   avaliacoesLocais,
   fenHistory,
-  moveCoordsHistory
+  moveCoordsHistory,
+  isMovePending = false
 }: MatchBoardAreaProps) {
   
   const navigation = useNavigation<any>();
 
   // A função de merge de estilos mescla as casas válidas com a casa do último lance
-  const getCombinedStyles = () => {
+  const combinedStyles = useMemo(() => {
     const styles: Record<string, ViewStyle> = { ...moveSquares }; 
 
     if (lastMove) {
@@ -85,14 +89,14 @@ export function MatchBoardArea({
     }
 
     return styles;
-  };
+  }, [lastMove, moveSquares]);
 
   return (
     <View style={styles.container}>
       
       {/* Barra de Avaliação */}
       {isEvalBarEnabled && (
-        <View style={styles.evalBarWrapper}>
+        <View style={[styles.evalBarWrapper, { height: boardSize }]}>
           <EvalBar 
             vantagemBrancas={vantagemBrancas} 
             isMate={isMate} 
@@ -102,23 +106,24 @@ export function MatchBoardArea({
       )}
 
       {/* Wrapper do Tabuleiro */}
-      <View style={styles.boardWrapper}>
+      <View style={[styles.boardWrapper, { width: boardSize, height: boardSize }]}>
         <CheckAlert isCheck={isCheck} />
 
         <CustomChessboard 
           fen={gameFen} 
-          boardOrientation={minhaCor === 'branca' ? 'white' : 'black'}
+          boardOrientation={boardOrientation || (minhaCor === 'branca' ? 'white' : 'black')}
           onSquareClick={onSquareClick}
-          customSquareStyles={getCombinedStyles()}
+          customSquareStyles={combinedStyles}
+          disabled={isMovePending || !!gameOver || !!pendingPromotion}
         />
 
         {/* Modal de Promoção preso na área do tabuleiro */}
         {pendingPromotion && (
           <PromotionModal 
             cor={minhaCor}
+            disabled={isMovePending}
             onSelect={(peca) => {
               realizarMovimento(pendingPromotion.origem, pendingPromotion.destino, peca);
-              setPendingPromotion(null);
             }} 
           />
         )}
@@ -143,9 +148,25 @@ export function MatchBoardArea({
                 moveCoordsHistory
               });
             }}
+            onPlayAgain={() => {
+              pararAvaliacao();
+              const isLocal = partidaData?.tipoPartida === 'local';
+              navigation.reset({
+                index: 1,
+                routes: [
+                  { name: 'Dashboard' },
+                  {
+                    name: 'Time',
+                    params: isLocal
+                      ? { tipoPartida: 'local', guestName: partidaData?.jogadores?.pretas || 'Visitante' }
+                      : { bot: botOponente }
+                  }
+                ]
+              });
+            }}
             onClose={() => {
               pararAvaliacao();
-              navigation.navigate('Dashboard'); 
+              navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
             }} 
           />
         )}
@@ -157,18 +178,19 @@ export function MatchBoardArea({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    maxWidth: 640,
+    maxWidth: 720,
     alignSelf: 'center', 
-    marginTop: 16, 
+    marginTop: 8,
     flexDirection: 'row', 
     gap: 8, 
     alignItems: 'stretch', 
+    justifyContent: 'center',
   },
   evalBarWrapper: {
     flexShrink: 0,
   },
   boardWrapper: {
-    flex: 1,
-    justifyContent: 'center', // Centraliza o tabuleiro verticalmente no espaço livre
+    flexShrink: 0,
+    justifyContent: 'center',
   }
 });

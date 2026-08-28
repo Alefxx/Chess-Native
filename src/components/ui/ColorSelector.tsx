@@ -18,6 +18,9 @@ export function ColorSelector({ selected, onSelect, isMultiplayer = false }: Col
       {/* Botão BRANCAS */}
       <Pressable
         onPress={() => onSelect('white')}
+        accessibilityRole="button"
+        accessibilityLabel="Jogar com as peças brancas"
+        accessibilityState={{ selected: selected === 'white' }}
         style={({ pressed }) => [
           styles.buttonBase,
           selected === 'white' ? styles.selectedWhite : styles.unselected,
@@ -30,6 +33,10 @@ export function ColorSelector({ selected, onSelect, isMultiplayer = false }: Col
       {/* Botão ALEATÓRIO */}
       <Pressable
         onPress={() => !isMultiplayer && onSelect('random')}
+        disabled={isMultiplayer}
+        accessibilityRole="button"
+        accessibilityLabel="Sortear a cor"
+        accessibilityState={{ selected: selected === 'random', disabled: isMultiplayer }}
         style={({ pressed }) => [
           styles.buttonBase,
           isMultiplayer ? styles.disabled : (selected === 'random' ? styles.selectedRandom : styles.unselected),
@@ -42,6 +49,9 @@ export function ColorSelector({ selected, onSelect, isMultiplayer = false }: Col
       {/* Botão PRETAS */}
       <Pressable
         onPress={() => onSelect('black')}
+        accessibilityRole="button"
+        accessibilityLabel="Jogar com as peças pretas"
+        accessibilityState={{ selected: selected === 'black' }}
         style={({ pressed }) => [
           styles.buttonBase,
           selected === 'black' ? styles.selectedBlack : styles.unselected,

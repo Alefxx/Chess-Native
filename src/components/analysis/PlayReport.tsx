@@ -1,6 +1,7 @@
 // src/screens/AnalysisSummaryScreen.tsx
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, ChevronLeft } from 'lucide-react-native';
 // Assumindo que o seu componente Button também será refatorado para React Native
 import { Button } from '@/components/ui/Button'; 
@@ -39,18 +40,16 @@ const SUMMARY_CONFIG: Record<keyof MoveStats, QualityConfig> = {
   5: { quality: 'blunder', label: 'Capivaras', bgColor: 'rgba(239, 68, 68, 0.1)', textColor: '#ef4444' },     // red
 };
 
-// Pegamos a largura da tela para imitar o max-w-md da web
-const { width } = Dimensions.get('window');
-const MAX_WIDTH = Math.min(width - 32, 448); // 448px é o max-w-md, com fallback para telas menores
-
 export function AnalysisSummaryScreen({ stats, onVerNoTabuleiro, onVoltarAoMenu }: AnalysisSummaryScreenProps) {
   const statKeys = [0, 1, 2, 3, 4, 5] as const;
+  const { width } = useWindowDimensions();
+  const cardWidth = Math.min(width - 24, 448);
 
   return (
     // SafeAreaView evita que o conteúdo cole no topo/bottom do celular
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={[styles.card, { width: MAX_WIDTH }]}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={[styles.card, { width: cardWidth }]}>
           
           <View style={styles.header}>
             <Text style={styles.title}>Relatório da Partida</Text>
@@ -111,28 +110,28 @@ export function AnalysisSummaryScreen({ stats, onVerNoTabuleiro, onVoltarAoMenu 
           </View>
           
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: '#020617', // slate-950
   },
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16, // p-4
+    padding: 12,
   },
   card: {
     backgroundColor: '#0f172a', // slate-900
     borderColor: '#1e293b', // border-slate-800
     borderWidth: 1,
     borderRadius: 24, // rounded-3xl
-    padding: 32, // p-8
+    padding: 20,
     shadowColor: '#000', // shadow-2xl aproximação
     shadowOffset: { width: 0, height: 25 },
     shadowOpacity: 0.25,
@@ -140,7 +139,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   header: {
-    marginBottom: 32, // mb-8
+    marginBottom: 20,
     alignItems: 'center', // text-center
   },
   title: {
@@ -149,20 +148,21 @@ const styles = StyleSheet.create({
     color: '#ffffff', // text-white
     marginBottom: 8, // mb-2
     letterSpacing: -0.5, // tracking-tight
+    textAlign: 'center',
   },
   subtitle: {
     color: '#94a3b8', // text-slate-400
     fontSize: 14, // text-sm
   },
   listContainer: {
-    gap: 12, // gap-3
-    marginBottom: 40, // mb-10
+    gap: 8,
+    marginBottom: 24,
   },
   statRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16, // p-4
+    padding: 12,
     borderRadius: 16, // rounded-2xl
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.05)', // border-white/5

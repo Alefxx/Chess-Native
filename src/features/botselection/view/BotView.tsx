@@ -25,19 +25,22 @@ export function BotView() {
   const navigation = useNavigation<any>();
 
   useEffect(() => {
+    let active = true;
+
     const fetchBots = async () => {
       try {
         setIsLoading(true);
         const data = await botService.listarBots();
-        setBots(data);
-      } catch (error) {
-        setErrorMsg('Erro ao carregar os adversários. Tente novamente.');
+        if (active) setBots(data);
+      } catch {
+        if (active) setErrorMsg('Erro ao carregar os adversários. Tente novamente.');
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     };
 
     fetchBots();
+    return () => { active = false; };
   }, []);
 
   const handleAvancar = () => {
@@ -58,6 +61,7 @@ export function BotView() {
           <IconButton 
             icon={<ArrowLeft size={24} color="#cbd5e1" />} 
             onPress={() => navigation.navigate('Dashboard')} 
+            accessibilityLabel="Voltar ao início"
           />
           <View style={styles.headerTextContainer}>
             <Text style={styles.title}>
@@ -107,6 +111,7 @@ export function BotView() {
               size="lg" 
               variant={selectedBotId ? 'primary' : 'secondary'}
               onPress={handleAvancar}
+              disabled={!selectedBotId}
             />
           </View>
         )}

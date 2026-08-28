@@ -52,7 +52,7 @@ export function LoginView() {
   };
 
   return (
-    <ScreenLayout noPadding>
+    <ScreenLayout noPadding keyboardAware>
       <ScrollView 
         contentContainerStyle={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
@@ -93,14 +93,17 @@ export function LoginView() {
 
           <View style={styles.actionContainer}>
             <Button 
-              label={isLoading ? 'Autenticando...' : 'Entrar'} 
+              label="Entrar"
               onPress={handleLogin} 
+              loading={isLoading}
+              disabled={!username.trim() || !senha}
             />
           </View>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Ainda não tem conta? </Text>
-            <Text 
+            <Text
+              accessibilityRole="link"
               style={styles.linkText} 
               onPress={() => navigation.navigate('Register')}
             >
@@ -175,5 +178,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#38bdf8', 
     fontWeight: '600',
+    paddingVertical: 10,
   }
 });

@@ -1,33 +1,47 @@
 import React from 'react';
-import { View, ViewStyle, StyleSheet } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppTheme, MaxContentWidth } from '@/constants/theme';
 
 interface ScreenLayoutProps {
   children: React.ReactNode;
   noPadding?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
+  keyboardAware?: boolean;
 }
 
-export function ScreenLayout({ children, noPadding = false, style }: ScreenLayoutProps) {
+export function ScreenLayout({ children, noPadding = false, style, keyboardAware = false }: ScreenLayoutProps) {
   return (
-    // Trocamos o SafeAreaView por uma View simples que ocupa tudo
-    <View style={[styles.container, style]}>
-      <View style={[styles.inner, !noPadding && styles.defaultPadding]}>
-        {children}
-      </View>
-    </View>
+    <SafeAreaView style={styles.container} edges={['top', 'right', 'bottom', 'left']}>
+      <KeyboardAvoidingView
+        enabled={keyboardAware}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <View style={[styles.inner, !noPadding && styles.defaultPadding, style]}>
+          {children}
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: AppTheme.background,
   },
- inner: {
+  keyboardView: {
     flex: 1,
+  },
+  inner: {
+    flex: 1,
+    width: '100%',
+    maxWidth: MaxContentWidth + 64,
+    alignSelf: 'center',
   },
   defaultPadding: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingVertical: 12,
   }
 });

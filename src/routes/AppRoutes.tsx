@@ -1,6 +1,6 @@
 // src/routes/AppRoutes.tsx
 import React from 'react';
-import { View } from 'react-native'; // <-- Importação da View adicionada
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuthStore } from '@/store/authStore';
@@ -25,7 +25,6 @@ export type RootStackParamList = {
   Time: { bot?: any; tipoPartida?: string; guestName?: string }; 
   Match: { partidaData: any; botOponente?: any; isEvalBarEnabled: boolean };
   GameLocal: { partidaData: any; isEvalBarEnabled: boolean };
-  LocalView: undefined;
   GameMode: undefined;
   Profile: undefined;
   Analysis: { 
@@ -43,17 +42,24 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function AppRoutes() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasHydrated = useAuthStore((state) => state.hasHydrated);
+
+  if (!hasHydrated) {
+    return (
+      <View style={styles.loading} accessibilityRole="progressbar">
+        <ActivityIndicator size="large" color="#a3d65c" />
+      </View>
+    );
+  }
 
   return (
-    // A MÁGICA FINAL AQUI: Envolver o roteador em uma View com flex: 1
-    <View style={{ flex: 1 }}>
-      <NavigationContainer>
+    <NavigationContainer>
         <Stack.Navigator 
           screenOptions={{ 
             headerShown: false,
             animation: 'fade', 
             // O flex: 1 aqui dentro empurra o fundo até o rodapé
-            contentStyle: { backgroundColor: '#020617', flex: 1 } 
+            contentStyle: { backgroundColor: '#07111f' }
           }}
         >
           {!isAuthenticated ? (
@@ -83,7 +89,15 @@ export function AppRoutes() {
             </Stack.Group>
           )}
         </Stack.Navigator>
-      </NavigationContainer>
-    </View>
+    </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#07111f',
+  },
+});

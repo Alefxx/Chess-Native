@@ -10,36 +10,36 @@ export function useMoveClassification(
   onAvaliacaoPronta: (codigo: number, id: number) => void 
 ) {
   
-  const [progressoFila, setProgressoFila] = useState({ avaliados: 0, total: 0 });
+  const [avaliados, setAvaliados] = useState(0);
   
   const avaliacoes = useRef<AnalisePosicao[]>([]);
   const indiceAtual = useRef<number>(0);
   
   const isProcessando = useRef(false);
   const isPausado = useRef(isEvalBarEnabled); 
+  const isMounted = useRef(true);
+  const historicoRef = useRef(historicoRealFens);
 
   useEffect(() => {
-    isPausado.current = isEvalBarEnabled;
-    if (!isEvalBarEnabled) {
-      processarFilaBackground();
-    }
-  }, [isEvalBarEnabled]);
+    historicoRef.current = historicoRealFens;
+  }, [historicoRealFens]);
 
   useEffect(() => {
-    setProgressoFila(p => ({ ...p, total: historicoRealFens.length }));
-    
-    if (!isPausado.current && historicoRealFens.length > indiceAtual.current) {
-      processarFilaBackground();
-    }
-  }, [historicoRealFens.length]); 
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      isPausado.current = true;
+      analysisService.stopAnalysis();
+    };
+  }, []);
 
   const processarFilaBackground = useCallback(async () => {
     if (isProcessando.current || isPausado.current) return;
     
     isProcessando.current = true;
 
-    while (indiceAtual.current < historicoRealFens.length && !isPausado.current) {
-      const fenAtual = historicoRealFens[indiceAtual.current];
+    while (indiceAtual.current < historicoRef.current.length && !isPausado.current && isMounted.current) {
+      const fenAtual = historicoRef.current[indiceAtual.current];
       
       try {
         const isStart = openingService.isStartPosition(fenAtual);
@@ -61,6 +61,7 @@ export function useMoveClassification(
         } 
         else {
           const analiseFinal = await analysisService.avaliarFenSincrono(fenAtual, 15);
+          if (!isMounted.current || isPausado.current) break;
           avaliacoes.current[indiceAtual.current] = analiseFinal;
 
           if (indiceAtual.current > 0) {
@@ -73,7 +74,9 @@ export function useMoveClassification(
         }
 
         indiceAtual.current += 1;
-        setProgressoFila(p => ({ ...p, avaliados: indiceAtual.current }));
+        if (isMounted.current) {
+          setAvaliados(indiceAtual.current);
+        }
         
       } catch (error) {
         console.error("Erro na avaliação da fila em background:", error);
@@ -82,7 +85,20 @@ export function useMoveClassification(
     }
 
     isProcessando.current = false;
-  }, [historicoRealFens, onAvaliacaoPronta]);
+  }, [onAvaliacaoPronta]);
+
+  useEffect(() => {
+    isPausado.current = isEvalBarEnabled;
+    if (!isEvalBarEnabled) {
+      processarFilaBackground();
+    }
+  }, [isEvalBarEnabled, processarFilaBackground]);
+
+  useEffect(() => {
+    if (!isPausado.current && historicoRealFens.length > indiceAtual.current) {
+      processarFilaBackground();
+    }
+  }, [historicoRealFens.length, processarFilaBackground]);
 
   const iniciarAvaliacaoFimDeJogo = useCallback(() => {
     isPausado.current = false;
@@ -95,7 +111,7 @@ export function useMoveClassification(
   }, []);
 
   return {
-    progressoFila,
+    progressoFila: { avaliados, total: historicoRealFens.length },
     iniciarAvaliacaoFimDeJogo,
     pararAvaliacao
   };

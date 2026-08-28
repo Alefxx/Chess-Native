@@ -1,5 +1,5 @@
 // src/features/match/hooks/useMatch.ts
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { matchService } from '@/features/match/service/match.service';
 import { Bot } from '@/features/botselection/service/bot.service';
 
@@ -16,21 +16,50 @@ import { useMatchAnalysisMemory } from './useMatchAnalysisMemory';
  * Hook Orquestrador: Coordena a comunicação entre sub-hooks e o backend.
  */
 export function useMatch(partidaData: any, currentUser: any, botOponente?: Bot, isEvalBarEnabled: boolean = false) {
+  const partidaId: string | undefined = partidaData?.partidaId;
+  const [isMovePending, setIsMovePending] = useState(false);
+  const [gameError, setGameError] = useState('');
+  const moveInFlight = useRef(false);
+  const selectionRequest = useRef(0);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      selectionRequest.current += 1;
+    };
+  }, []);
   
   const board = useBoardStateMatch(partidaData, currentUser);
   const clock = useClockMatch(partidaData);
   const rules = useGameRulesMatch();
   const history = useBidHistoryMatch();
+  const {
+    gameFen,
+    isMinhaVez,
+    minhaCor,
+    moveSquares,
+    pieceSquare,
+    setGameFen,
+    setLastMove,
+    setMoveSquares,
+    setPieceSquare,
+  } = board;
+  const { atualizarTempos } = clock;
+  const { atualizarHistorico } = history;
+  const { atualizarRegras, gameOver, pendingPromotion, setPendingPromotion } = rules;
 
   // Delegação do armazenamento e processamento de estatísticas para o hook especializado
   const memory = useMatchAnalysisMemory({
-    partidaId: partidaData?.partidaId,
+    partidaId,
     fenInicial: partidaData?.fen,
-    minhaCor: board.minhaCor
+    minhaCor
   });
+  const { registrarQuadroHistorico } = memory;
 
   // ATUALIZAÇÃO: Nova assinatura do useAnalysis interceptando a abertura
-  const { evalData, currentOpening } = useAnalysis(board.gameFen, isEvalBarEnabled);
+  const { evalData, currentOpening } = useAnalysis(gameFen, isEvalBarEnabled);
   const vantagemBrancas = evalData?.vantagemBrancas || 0;
   const isMate = evalData?.tipo === 'mate';
 
@@ -41,85 +70,96 @@ export function useMatch(partidaData: any, currentUser: any, botOponente?: Bot, 
     pararAvaliacao 
   } = useMoveClassification(memory.fenHistory, isEvalBarEnabled, memory.registrarAvaliacaoLocal);
 
-  const processarRespostaServidor = (response: any, moveRealizado?: { origem: string; destino: string }) => {
-    clock.atualizarTempos(response.tempos);
-    board.setGameFen(response.fen);
-    history.atualizarHistorico(response.pgn);
-    rules.atualizarRegras(response.statusPartida, response.detalhes);
+  const processarRespostaServidor = useCallback((response: any, moveRealizado?: { origem: string; destino: string }) => {
+    if (!mounted.current) return;
+    atualizarTempos(response.tempos);
+    setGameFen(response.fen);
+    atualizarHistorico(response.pgn);
+    atualizarRegras(response.statusPartida, response.detalhes);
 
     // Delega o salvamento do histórico visual para o hook de memória
-    memory.registrarQuadroHistorico(response.fen, moveRealizado);
+    registrarQuadroHistorico(response.fen, moveRealizado);
 
     if (moveRealizado) {
-      board.setLastMove(moveRealizado);
+      setLastMove(moveRealizado);
     }
-  };
+  }, [atualizarHistorico, atualizarRegras, atualizarTempos, registrarQuadroHistorico, setGameFen, setLastMove]);
 
-  useStockfishMatch({
-    partidaId: partidaData?.partidaId,
-    gameFen: board.gameFen,
-    isMinhaVez: board.isMinhaVez,
-    minhaCor: board.minhaCor,
-    isGameOver: !!rules.gameOver,
-    isPendingPromotion: !!rules.pendingPromotion,
+  const { botError } = useStockfishMatch({
+    partidaId,
+    gameFen,
+    isMinhaVez,
+    minhaCor,
+    isGameOver: !!gameOver,
+    isPendingPromotion: !!pendingPromotion,
     botOponente,
-    onBotMoveSuccess: (response, moveRealizado) => processarRespostaServidor(response, moveRealizado)
+    onBotMoveSuccess: processarRespostaServidor
   });
 
-  const realizarMovimento = async (origem: string, destino: string, pecaPromocao?: string) => {
+  const realizarMovimento = useCallback(async (origem: string, destino: string, pecaPromocao?: string) => {
+    if (moveInFlight.current || !partidaId) return false;
+
+    moveInFlight.current = true;
+    setIsMovePending(true);
+    setGameError('');
+
     try {
-      board.setPieceSquare('');
-      board.setMoveSquares({});
+      setPieceSquare('');
+      setMoveSquares({});
 
       // ATUALIZAÇÃO: Não enviamos mais a corDoTurnoAtual (Segurança do Backend garantida)
       const payload: any = { origem, destino };
       if (pecaPromocao) payload.promocao = pecaPromocao;
 
-      const response = await matchService.executarMovimento(partidaData.partidaId, payload);
+      const response = await matchService.executarMovimento(partidaId, payload);
 
       if (response.sucesso) {
         if (response.requerPromocao) {
-           rules.setPendingPromotion({ origem, destino });
+           setPendingPromotion({ origem, destino });
            return false; 
         }
 
         if (response.fen) {
-            if (pecaPromocao) rules.setPendingPromotion(null);
+            setPendingPromotion(null);
             processarRespostaServidor(response, { origem, destino });
             return true; 
         }
       }
+      if (mounted.current) setGameError(response.mensagem || 'Esse movimento não é válido.');
       return false; 
-    } catch (error) {
+    } catch (error: any) {
       console.error("[JOGADOR] Falha de comunicação no movimento:", error);
+      if (mounted.current) setGameError(error.message || 'Não foi possível realizar o movimento.');
       return false;
+    } finally {
+      moveInFlight.current = false;
+      if (mounted.current) setIsMovePending(false);
     }
-  };
+  }, [partidaId, processarRespostaServidor, setMoveSquares, setPendingPromotion, setPieceSquare]);
 
-  const onPieceDrop = async (sourceSquare: string, targetSquare: string) => {
-    if (!board.isMinhaVez || rules.gameOver || rules.pendingPromotion) return false;
-    return await realizarMovimento(sourceSquare, targetSquare);
-  };
+  const onSquareClick = useCallback(async (square: string) => {
+    if (moveInFlight.current || !isMinhaVez || gameOver || pendingPromotion || !partidaId) return;
 
-  const onSquareClick = async (square: string) => {
-    if (!board.isMinhaVez || rules.gameOver || rules.pendingPromotion) return;
+    setGameError('');
+    const requestId = ++selectionRequest.current;
 
-    if (board.pieceSquare === square) {
-      board.setPieceSquare('');
-      board.setMoveSquares({});
+    if (pieceSquare === square) {
+      setPieceSquare('');
+      setMoveSquares({});
       return;
     }
 
-    if (board.pieceSquare && board.moveSquares[square]) {
-      await realizarMovimento(board.pieceSquare, square);
+    if (pieceSquare && moveSquares[square]) {
+      await realizarMovimento(pieceSquare, square);
       return;
     }
 
     try {
-      const movimentos = await matchService.obterMovimentos(partidaData.partidaId, square, board.minhaCor);
+      const movimentos = await matchService.obterMovimentos(partidaId, square, minhaCor);
+      if (!mounted.current || requestId !== selectionRequest.current) return;
       
       if (movimentos && movimentos.length > 0) {
-        board.setPieceSquare(square);
+        setPieceSquare(square);
         
         const novosEstilos: Record<string, any> = { [square]: { backgroundColor: 'rgba(255, 255, 0, 0.4)' } };
         movimentos.forEach((mov: any) => {
@@ -132,31 +172,70 @@ export function useMatch(partidaData: any, currentUser: any, botOponente?: Bot, 
             borderColor: 'rgba(136, 196, 37, 0.8)'
           };
         });
-        board.setMoveSquares(novosEstilos);
+        setMoveSquares(novosEstilos);
       } else {
-        board.setPieceSquare('');
-        board.setMoveSquares({});
+        setPieceSquare('');
+        setMoveSquares({});
       }
     } catch (error) {
+      if (!mounted.current || requestId !== selectionRequest.current) return;
       console.error("[JOGADOR] Erro ao buscar movimentos válidos para a peça selecionada.", error);
-      board.setPieceSquare('');
-      board.setMoveSquares({});
+      setGameError('Não foi possível consultar os movimentos dessa peça.');
+      setPieceSquare('');
+      setMoveSquares({});
     }
-  };
+  }, [gameOver, isMinhaVez, minhaCor, moveSquares, partidaId, pendingPromotion, pieceSquare, realizarMovimento, setMoveSquares, setPieceSquare]);
 
   // NOVO: Função para o jogador desistir da partida atual
-  const abandonarPartida = async () => {
+  const abandonarPartida = useCallback(async () => {
+    if (moveInFlight.current || !partidaId) return;
+    moveInFlight.current = true;
+    setIsMovePending(true);
+    setGameError('');
     try {
-      const response = await matchService.desistirPartida(partidaData.partidaId, board.minhaCor);
+      const response = await matchService.desistirPartida(partidaId, minhaCor);
       
       // Se sucesso, passa o novo status (fimDeJogo = true, motivo = abandono) pro GameRules
       if (response.sucesso && response.statusPartida) {
-        rules.atualizarRegras(response.statusPartida);
+        atualizarRegras(response.statusPartida);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("[JOGADOR] Erro ao desistir:", error);
+      if (mounted.current) setGameError(error.message || 'Não foi possível abandonar a partida.');
+    } finally {
+      moveInFlight.current = false;
+      if (mounted.current) setIsMovePending(false);
     }
-  };
+  }, [atualizarRegras, minhaCor, partidaId]);
+
+  useEffect(() => {
+    if (!partidaId || gameOver) return;
+
+    let active = true;
+    const sincronizar = async () => {
+      try {
+        const response = await matchService.sincronizarRelogio(partidaId);
+        if (!active || !response?.sucesso) return;
+        atualizarTempos(response.tempos);
+        if (response.tempos.fimNoTempo) {
+          atualizarRegras({
+            fimDeJogo: true,
+            vencedor: response.tempos.vencedorPorTempo,
+            motivo: 'tempo'
+          });
+        }
+      } catch {
+        // A sincronização periódica é oportunista; o próximo lance continua autoritativo.
+      }
+    };
+
+    sincronizar();
+    const interval = setInterval(sincronizar, 5000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [atualizarRegras, atualizarTempos, gameOver, partidaId]);
 
   return {
     gameFen: board.gameFen,
@@ -167,7 +246,6 @@ export function useMatch(partidaData: any, currentUser: any, botOponente?: Bot, 
     isCheck: rules.isCheck,
     gameOver: rules.gameOver,
     pendingPromotion: rules.pendingPromotion,
-    setPendingPromotion: rules.setPendingPromotion,
     tempoBrancas: clock.tempoBrancas,
     tempoPretas: clock.tempoPretas,
     
@@ -178,10 +256,11 @@ export function useMatch(partidaData: any, currentUser: any, botOponente?: Bot, 
     progressoFila,
     iniciarAvaliacaoFimDeJogo,
     pararAvaliacao,          
-    onPieceDrop,
     onSquareClick,
     realizarMovimento,
     abandonarPartida, // <-- Função exposta para a View
+    isMovePending,
+    gameError: gameError || botError,
     
     avaliacoesLocais: memory.avaliacoesLocais, 
     fenHistory: memory.fenHistory,

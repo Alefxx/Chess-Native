@@ -1,6 +1,6 @@
 // src/features/match/view/MatchView.tsx
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 import { PlayerPanel } from '@/components/board/PlayerPanel';
@@ -20,6 +20,7 @@ export function MatchView() {
   const partidaData = route.params?.partidaData;
   const botOponente = route.params?.botOponente;
   const isEvalBarEnabled = route.params?.isEvalBarEnabled || false;
+  const { width, height } = useWindowDimensions();
 
   useEffect(() => {
     if (!partidaData || !currentUser) {
@@ -28,8 +29,6 @@ export function MatchView() {
   }, [partidaData, currentUser, navigation]);
 
   const matchState = useMatch(partidaData, currentUser, botOponente, isEvalBarEnabled);
-
-  if (!partidaData || !currentUser) return null;
 
   const turnoAtualFEN = matchState.gameFen.split(' ')[1] || 'w'; 
   const isMinhaVez = (matchState.minhaCor === 'branca' && turnoAtualFEN === 'w') || (matchState.minhaCor === 'preta' && turnoAtualFEN === 'b');
@@ -42,15 +41,29 @@ export function MatchView() {
   const clockAdversario = useChessClock(tempoAdversario, isAdversarioVez, isFimDeJogo);
   const clockJogador = useChessClock(tempoJogador, isMinhaVez, isFimDeJogo);
 
+  if (!partidaData || !currentUser) return null;
+
+  const isPlayerWhite = matchState.minhaCor === 'branca';
+  const opponentName = isPlayerWhite ? partidaData.jogadores.pretas : partidaData.jogadores.brancas;
+  const boardSize = Math.floor(Math.min(
+    width - (isEvalBarEnabled ? 72 : 32),
+    Math.max(220, height * 0.46),
+    520
+  ));
+
   return (
     // Substituindo o SafeAreaView pelo nosso ScreenLayout com noPadding
     <ScreenLayout noPadding>
-      <View style={styles.container}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         
         {/* Bloco 1: Adversário no Topo */}
         <View style={styles.playerWrapper}>
           <PlayerPanel 
-            nome={partidaData.jogadores.pretas}
+            nome={opponentName}
             rating={botOponente?.rating || 1500}
             iniciais="OP"
             foto={botOponente?.foto}
@@ -58,7 +71,7 @@ export function MatchView() {
             isClockActive={isAdversarioVez}
             isLowTime={clockAdversario.isLowTime}
             fen={matchState.gameFen}
-            capturedColor={matchState.minhaCor === 'branca' ? 'white' : 'black'}
+            capturedColor={isPlayerWhite ? 'white' : 'black'}
             position="top"
           />
         </View>
@@ -68,6 +81,7 @@ export function MatchView() {
           <MatchBoardArea 
             isEvalBarEnabled={isEvalBarEnabled}
             minhaCor={matchState.minhaCor as 'branca' | 'preta'}
+            boardSize={boardSize}
             gameFen={matchState.gameFen}
             isCheck={matchState.isCheck}
             lastMove={matchState.lastMove}
@@ -75,7 +89,6 @@ export function MatchView() {
             onSquareClick={matchState.onSquareClick}
             realizarMovimento={matchState.realizarMovimento}
             pendingPromotion={matchState.pendingPromotion}
-            setPendingPromotion={matchState.setPendingPromotion}
             vantagemBrancas={matchState.vantagemBrancas}
             isMate={matchState.isMate}
             gameOver={matchState.gameOver}
@@ -89,8 +102,17 @@ export function MatchView() {
             avaliacoesLocais={matchState.avaliacoesLocais}
             fenHistory={matchState.fenHistory}
             moveCoordsHistory={matchState.moveCoordsHistory}
+            isMovePending={matchState.isMovePending}
           />
         </View>
+
+        {(matchState.isMovePending || matchState.gameError) && (
+          <View style={[styles.feedback, matchState.gameError && styles.feedbackError]}>
+            <Text style={[styles.feedbackText, matchState.gameError && styles.feedbackErrorText]}>
+              {matchState.gameError || 'Validando jogada…'}
+            </Text>
+          </View>
+        )}
 
         {/* Bloco 3: Usuário Logado na Base */}
         <View style={styles.playerWrapper}>
@@ -102,7 +124,7 @@ export function MatchView() {
             isClockActive={isMinhaVez}
             isLowTime={clockJogador.isLowTime}
             fen={matchState.gameFen}
-            capturedColor={matchState.minhaCor === 'branca' ? 'black' : 'white'}
+            capturedColor={isPlayerWhite ? 'black' : 'white'}
             position="bottom"
           />
         </View>
@@ -130,34 +152,54 @@ export function MatchView() {
 
           <MoveHistoryBoard 
             pgnHistory={matchState.moveHistory} 
-            onProporEmpate={() => console.log('Empate solicitado')}
             onAbandonar={matchState.abandonarPartida} 
+            actionsDisabled={matchState.isMovePending}
+            style={styles.history}
           />
         </View>
         
-      </View>
+      </ScrollView>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  // Removi o safeArea daqui, o layout já cuida disso
+  scroll: { flex: 1 },
   container: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 8, 
-    paddingVertical: 16, 
-    gap: 8, 
+    paddingVertical: 8,
+    gap: 10,
   },
   playerWrapper: {
-    zIndex: 10, 
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
   boardWrapper: {
     width: '100%',
     alignItems: 'center',
-    zIndex: 20, 
+    zIndex: 1,
+  },
+  feedback: {
+    alignSelf: 'center',
+    backgroundColor: 'rgba(69, 185, 232, 0.12)',
+    borderColor: 'rgba(69, 185, 232, 0.35)',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  feedbackError: {
+    backgroundColor: 'rgba(239, 83, 80, 0.12)',
+    borderColor: 'rgba(239, 83, 80, 0.4)',
+  },
+  feedbackText: { color: '#8fd8f5', fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  feedbackErrorText: { color: '#fecaca' },
+  history: {
+    height: 230,
   },
   footerWrapper: {
-    flex: 1, 
     gap: 8,
     marginTop: 8,
   },

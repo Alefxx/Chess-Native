@@ -9,15 +9,18 @@ export interface ChessOpening {
 
 class OpeningService {
   private dictionary: Record<string, ChessOpening> | null = null;
+  private positions = new Map<string, ChessOpening>();
   private readonly START_FEN_BASE = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 
   // No React Native, substituímos o fetch pelo require (bundle direto)
-  async loadOpenings(): Promise<void> {
+  loadOpenings(): void {
     if (this.dictionary) return;
     try {
       // Mova o seu ecoA.json para a pasta src/assets/data/ecoA.json
       this.dictionary = require('../../../../assets/data/ecoA.json');
-      console.log("[OpeningService] Livro de aberturas carregado instantaneamente da memória local.");
+      for (const [fen, opening] of Object.entries(this.dictionary!)) {
+        this.positions.set(fen.split(' ').slice(0, 4).join(' '), opening);
+      }
     } catch (error) {
       console.error("[OpeningService] Erro ao carregar o livro de aberturas:", error);
     }
@@ -30,14 +33,7 @@ class OpeningService {
     if (exactMatch) return exactMatch;
 
     const baseFen = fen.split(' ').slice(0, 4).join(' ');
-    
-    for (const key in this.dictionary) {
-      if (key.startsWith(baseFen)) {
-        return this.dictionary[key];
-      }
-    }
-
-    return null;
+    return this.positions.get(baseFen) || null;
   }
 
   isStartPosition(fen: string): boolean {

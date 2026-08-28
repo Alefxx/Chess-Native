@@ -18,6 +18,7 @@ export function Card({ children, style }: CardProps) {
 const styles = StyleSheet.create({
   card: {
     width: '100%',
+    maxWidth: 440,
     alignSelf: 'center', // mx-auto
     padding: 20, // p-5 (médio p-5 e md:p-8)
     backgroundColor: '#1e293b', // bg-slate-800

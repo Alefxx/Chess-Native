@@ -5,10 +5,10 @@
     "strict": true,
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
       ],
       "@/assets/*": [
-        "./assets/*"
+        "./src/assets/*"
       ]
     }
   },

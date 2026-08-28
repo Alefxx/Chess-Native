@@ -15,6 +15,7 @@ interface GameOverModalProps {
   stats?: MoveStats;
   onAvaliar?: () => void;
   onVerNoTabuleiro: () => void;
+  onPlayAgain: () => void;
   onClose: () => void;
 }
 
@@ -26,6 +27,7 @@ export function GameOverModal({
   stats,
   onAvaliar, 
   onVerNoTabuleiro,
+  onPlayAgain,
   onClose 
 }: GameOverModalProps) {
   
@@ -39,7 +41,7 @@ export function GameOverModal({
     return (
       // Envolvendo o Resumo no Modal nativo também
       <Modal transparent={true} visible={true} animationType="slide" onRequestClose={onClose}>
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#0f172a' }]}>
+        <View style={styles.summary}>
           <AnalysisSummaryScreen 
             stats={safeStats} 
             onVerNoTabuleiro={onVerNoTabuleiro} 
@@ -80,6 +82,7 @@ export function GameOverModal({
       transparent={true}
       visible={true}
       animationType="fade"
+      statusBarTranslucent
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
@@ -101,9 +104,14 @@ export function GameOverModal({
                 variant="primary" 
                 onPress={() => { setIsEvaluating(true); onAvaliar?.(); }} 
               />
+              <Button
+                label="Jogar novamente"
+                variant="secondary"
+                onPress={onPlayAgain}
+              />
               <Button 
-                label="Menu Superior" 
-                variant="secondary" 
+                label="Voltar ao início"
+                variant="ghost"
                 onPress={onClose} 
               />
             </View>
@@ -111,13 +119,13 @@ export function GameOverModal({
             <View style={styles.evaluatingContainer}>
               <ActivityIndicator size="large" color="#3b82f6" style={styles.spinner} />
               <Text style={styles.evalTitle}>Avaliando jogadas...</Text>
-              <Text style={styles.evalSubtitle}>{pAvaliados} de {pTotal} lances</Text>
+              <Text style={styles.evalSubtitle}>{pAvaliados} de {pTotal} posições</Text>
               
               <View style={styles.progressTrack}>
                 <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
               </View>
 
-              <Button label="Cancelar" variant="secondary" onPress={onClose} />
+              <Button label="Cancelar e sair" variant="secondary" onPress={onClose} />
             </View>
           ) : (
             <View style={styles.evaluatingContainer}>
@@ -138,6 +146,7 @@ export function GameOverModal({
 }
 
 const styles = StyleSheet.create({
+  summary: { flex: 1, backgroundColor: '#0f172a' },
   overlay: {
     flex: 1, // 'flex: 1' em vez de 'absolute' faz o Modal nativo preencher a tela inteira com facilidade
     backgroundColor: 'rgba(0, 0, 0, 0.8)', 

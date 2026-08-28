@@ -84,7 +84,7 @@ export function ProfileView() {
 
   return (
     // Substituímos o SafeAreaView e o KeyboardAvoidingView nativos pelo nosso componente
-    <ScreenLayout noPadding>
+    <ScreenLayout noPadding keyboardAware>
       <ScrollView 
         contentContainerStyle={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
@@ -96,6 +96,7 @@ export function ProfileView() {
           <IconButton 
             icon={<ArrowLeft size={24} color="#ffffff" />} 
             onPress={() => navigation.navigate('Dashboard')} 
+            accessibilityLabel="Voltar ao início"
           />
           <Text style={styles.headerTitle}>Meu Perfil</Text>
         </View>
@@ -156,8 +157,11 @@ export function ProfileView() {
                 
                 return (
                   <Pressable
-                    key={index}
+                    key={path}
                     onPress={() => setFotoSelecionada(path)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Selecionar avatar ${index + 1}`}
+                    accessibilityState={{ selected: isSelected }}
                     style={({ pressed }) => [
                       styles.gridItem,
                       isSelected ? styles.gridItemSelected : styles.gridItemUnselected,
@@ -184,9 +188,11 @@ export function ProfileView() {
           {/* Ação de Confirmação */}
           <View style={styles.actionContainer}>
             <Button 
-              label={isLoading ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'} 
+              label="Salvar alterações"
               onPress={handleSalvarAlteracoes} 
               size="md"
+              loading={isLoading}
+              disabled={!nome.trim()}
             />
           </View>
 
@@ -286,7 +292,10 @@ const styles = StyleSheet.create({
     padding: 0, 
   },
   editIconBtn: {
-    padding: 4,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   gridSection: {
     width: '100%',
@@ -308,7 +317,7 @@ const styles = StyleSheet.create({
     gap: 12, 
   },
   gridItem: {
-    width: '22%', 
+    width: '21%',
     aspectRatio: 1, 
     borderRadius: 8,
     overflow: 'hidden',

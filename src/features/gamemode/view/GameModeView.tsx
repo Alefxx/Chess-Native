@@ -1,6 +1,6 @@
 // src/features/gamemode/view/GameModeView.tsx
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import { Logo } from '@/components/ui/Logo';
@@ -21,7 +21,7 @@ export function GameModeView() {
   return (
     // Substituindo o SafeAreaView raiz pelo nosso ScreenLayout
     <ScreenLayout>
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         
         {/* Navegação Superior */}
         <View style={styles.header}>
@@ -69,22 +69,20 @@ export function GameModeView() {
               size="lg" 
               variant="secondary"
               style={styles.gameModeButton}
-              onPress={() => navigation.navigate('LocalView')} 
+              onPress={() => navigation.navigate('Time', { tipoPartida: 'local', guestName: 'Visitante' })}
             />
 
             <Button 
-              label="Multiplayer Online" 
+              label="Multiplayer Online · Em breve"
               size="lg" 
               variant="secondary"
               style={styles.gameModeButton}
-              onPress={() => {
-                console.log('Modo Multiplayer selecionado');
-              }} 
+              disabled
             />
           </View>
 
         </View>
-      </View>
+      </ScrollView>
     </ScreenLayout>
   );
 }
@@ -92,7 +90,7 @@ export function GameModeView() {
 const styles = StyleSheet.create({
   // Removi a classe 'safeArea' que não é mais necessária
   container: {
-    flex: 1, 
+    flexGrow: 1,
     // Removi os paddings duplos (horizontal e top)
   },
   header: {
@@ -100,18 +98,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 40, 
+    marginBottom: 24,
   },
   main: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
-    justifyContent: 'center', // Isso garante que os botões fiquem perfeitamente centralizados verticalmente
+    justifyContent: 'center',
+    paddingVertical: 24,
     width: '100%',
     alignSelf: 'center', 
   },
   titleContainer: {
     alignItems: 'center',
-    marginBottom: 40, 
+    marginBottom: 28,
   },
   title: {
     fontSize: 36, 
@@ -137,6 +136,6 @@ const styles = StyleSheet.create({
   },
   gameModeButton: {
     width: '100%',
-    paddingVertical: 20, 
+    minHeight: 56,
   }
 });
