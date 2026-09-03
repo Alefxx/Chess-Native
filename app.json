@@ -4,6 +4,7 @@
     "slug": "chessnative",
     "version": "1.0.0",
     "orientation": "default",
+    "icon": ".src/assets/icon.jpg"
     "scheme": "chessnative",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#07111f",
