@@ -22,7 +22,7 @@ interface ChessPieceProps {
   char: string;
 }
 
-export function ChessPiece({ char }: ChessPieceProps) {
+export const ChessPiece = React.memo(function ChessPiece({ char }: ChessPieceProps) {
   const isWhite = char === char.toUpperCase();
   const colorPrefix = isWhite ? 'w' : 'b';
   const typeUpper = char.toUpperCase();
@@ -41,7 +41,7 @@ export function ChessPiece({ char }: ChessPieceProps) {
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

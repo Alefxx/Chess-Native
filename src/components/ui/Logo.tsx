@@ -1,13 +1,13 @@
 // src/components/ui/Logo.tsx
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export function Logo({ size = 'md' }: LogoProps) {
-  const pulseAnim = useRef(new Animated.Value(0.4)).current;
+  const [pulseAnim] = useState(() => new Animated.Value(0.4));
 
   useEffect(() => {
     const animation = Animated.loop(
@@ -15,12 +15,12 @@ export function Logo({ size = 'md' }: LogoProps) {
         Animated.timing(pulseAnim, {
           toValue: 1,
           duration: 800,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(pulseAnim, {
           toValue: 0.4,
           duration: 800,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ])
     );

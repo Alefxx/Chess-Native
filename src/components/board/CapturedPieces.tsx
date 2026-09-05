@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 // Atenção: Certifique-se de que este arquivo pieceImages no Mobile 
 // esteja exportando as imagens usando require('caminho/da/imagem.png')
 import { pieceImages } from '../pieces/ChessPiece';
@@ -58,8 +59,7 @@ export function CapturedPieces({ fen, capturedColor }: CapturedPiecesProps) {
           accessibilityLabel={`Captured ${type}`}
           // pointerEvents="none" substitui o draggable="false" e impede toques
           pointerEvents="none"
-          // resizeMode substitui o object-contain
-          resizeMode="contain"
+          contentFit="contain"
           style={styles.pieceImage}
         />
       ))}

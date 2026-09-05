@@ -1,6 +1,6 @@
 // src/features/dashboard/view/DashboardView.tsx
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Animated, ScrollView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 import { Logo } from '@/components/ui/Logo';
@@ -13,7 +13,7 @@ export function DashboardView() {
   const navigation = useNavigation<any>();
   const user = useAuthStore((state) => state.user);
 
-  const bounceAnim = useRef(new Animated.Value(0)).current;
+  const [bounceAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     const animation = Animated.loop(
@@ -21,12 +21,12 @@ export function DashboardView() {
         Animated.timing(bounceAnim, {
           toValue: -10,
           duration: 1500,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(bounceAnim, {
           toValue: 0,
           duration: 1500,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ])
     );
@@ -46,7 +46,7 @@ export function DashboardView() {
 
   return (
     <ScreenLayout>
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
 
         {/* HEADER */}
         <View style={styles.header}>
@@ -95,14 +95,14 @@ export function DashboardView() {
 
         </View>
 
-      </View>
+      </ScrollView>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
   },
 
   /* =========================
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
 
   header: {
     width: '100%',
-    height: 50,
+    minHeight: 56,
 
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -125,11 +125,10 @@ const styles = StyleSheet.create({
      ========================= */
 
   main: {
-    flex: 1,
-
+    flexGrow: 1,
     alignItems: 'center',
-
-    paddingTop: 70,
+    justifyContent: 'center',
+    paddingVertical: 48,
   },
 
   /* =========================
@@ -180,5 +179,7 @@ const styles = StyleSheet.create({
 
   buttonContainer: {
     marginTop: 48,
+    width: '100%',
+    maxWidth: 320,
   },
 });

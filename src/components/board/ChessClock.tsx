@@ -1,6 +1,6 @@
 // src/components/board/ChessClock.tsx
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
 
 interface ChessClockProps {
   formato: string;
@@ -10,31 +10,35 @@ interface ChessClockProps {
 
 export function ChessClock({ formato, isActive, isLowTime }: ChessClockProps) {
   // Criamos um valor animado para a opacidade (começa em 1)
-  const opacityAnim = useRef(new Animated.Value(1)).current;
+  const [opacityAnim] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
+    let animation: Animated.CompositeAnimation | undefined;
     if (isActive && isLowTime) {
       // Cria a animação de piscar (vai para 0.5 e volta para 1)
-      Animated.loop(
+      animation = Animated.loop(
         Animated.sequence([
           Animated.timing(opacityAnim, {
             toValue: 0.4,
             duration: 500,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }),
           Animated.timing(opacityAnim, {
             toValue: 1,
             duration: 500,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }),
         ])
-      ).start();
+      );
+      animation.start();
     } else {
       // Se não estiver com tempo baixo, cancela a animação e reseta para 1
       opacityAnim.stopAnimation();
       opacityAnim.setValue(1);
     }
-  }, [isActive, isLowTime]);
+
+    return () => animation?.stop();
+  }, [isActive, isLowTime, opacityAnim]);
 
   if (formato === '∞') {
     return (

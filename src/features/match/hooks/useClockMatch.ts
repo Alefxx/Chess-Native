@@ -1,6 +1,6 @@
 
 // src/features/match/hooks/useClockMatch.ts
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 /**
  * Hook responsável por gerenciar e sincronizar os tempos de jogo (brancas e pretas).
@@ -19,12 +19,12 @@ export function useClockMatch(partidaData: any) {
    * Atualiza os relógios locais com os valores autoritativos vindos do backend.
    * Utilizado para garantir que o tempo visual esteja em sincronia com o servidor após cada lance.
    */
-  const atualizarTempos = (novosTempos?: { brancas: number; pretas: number }) => {
+  const atualizarTempos = useCallback((novosTempos?: { brancas: number; pretas: number }) => {
     if (novosTempos) {
       setTempoBrancas(novosTempos.brancas);
       setTempoPretas(novosTempos.pretas);
     }
-  };
+  }, []);
 
   return {
     tempoBrancas,

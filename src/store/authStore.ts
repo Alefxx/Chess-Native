@@ -13,8 +13,10 @@ interface UserProfile {
 interface AuthState {
   user: UserProfile | null;
   isAuthenticated: boolean;
+  hasHydrated: boolean;
   login: (userData: UserProfile) => void;
   logout: () => void;
+  setHasHydrated: (value: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -22,13 +24,17 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       isAuthenticated: false,
+      hasHydrated: false,
       login: (userData) => set({ user: userData, isAuthenticated: true }),
       logout: () => set({ user: null, isAuthenticated: false }),
+      setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
       name: 'chess-auth-storage', 
       // Substituímos o localStorage pelo AsyncStorage
       storage: createJSONStorage(() => AsyncStorage), 
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
     }
   )
 );

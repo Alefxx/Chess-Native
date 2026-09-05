@@ -88,7 +88,7 @@ export const matchService = {
       const response = await apiClient.post<MatchResponse>('/partida/nova', dados);
       return response.data;
     } catch (err) {
-      handleApiError(err, "Falha ao iniciar partida.");
+      return handleApiError(err, "Falha ao iniciar partida.");
     }
   },
 
@@ -97,7 +97,7 @@ export const matchService = {
       const response = await apiClient.post<MoveResponse>(`/partida/${partidaId}/mover`, dados);
       return response.data;
     } catch (err) {
-      handleApiError(err, "Movimento inválido ou erro de servidor.");
+      return handleApiError(err, "Movimento inválido ou erro de servidor.");
     }
   },
 
@@ -106,7 +106,7 @@ export const matchService = {
       await apiClient.post(`/partida/${partidaId}/avaliacao`, dados);
       return true;
     } catch (err) {
-      handleApiError(err, "Erro ao registrar avaliação do lance.");
+      return handleApiError(err, "Erro ao registrar avaliação do lance.");
     }
   },
 
@@ -115,7 +115,7 @@ export const matchService = {
       const response = await apiClient.get(`/partida/${partidaId}/estado`);
       return response.data;
     } catch (err) {
-      handleApiError(err, "Erro ao buscar estado da partida.");
+      return handleApiError(err, "Erro ao buscar estado da partida.");
     }
   },
 
@@ -124,7 +124,7 @@ export const matchService = {
       const response = await apiClient.get(`/partida/${partidaId}/movimentos/${origem}?cor=${cor}`);
       return response.data.podeIrPara || [];
     } catch (err) {
-      handleApiError(err, "Erro ao consultar movimentos válidos.");
+      return handleApiError(err, "Erro ao consultar movimentos válidos.");
     }
   },
 
@@ -133,7 +133,7 @@ export const matchService = {
       const response = await apiClient.get<SyncClockResponse>(`/partida/${partidaId}/relogio`);
       return response.data;
     } catch (err) {
-      handleApiError(err, "Erro ao sincronizar relógio.");
+      return handleApiError(err, "Erro ao sincronizar relógio.");
     }
   },
 
@@ -143,7 +143,7 @@ export const matchService = {
       const response = await apiClient.post<MoveResponse>(`/partida/${partidaId}/desistir`, { corQueDesistiu });
       return response.data;
     } catch (err) {
-      handleApiError(err, "Erro ao tentar desistir da partida.");
+      return handleApiError(err, "Erro ao tentar desistir da partida.");
     }
   }
 };

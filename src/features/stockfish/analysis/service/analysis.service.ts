@@ -24,10 +24,9 @@ export class AnalysisService {
   }
 
   public stopAnalysis() {
-    if (this.isAnalyzing && this.sendMessageToEngine) {
-      this.sendMessageToEngine('stop');
-      this.isAnalyzing = false;
-    }
+    if (this.isAnalyzing && this.sendMessageToEngine) this.sendMessageToEngine('stop');
+    this.isAnalyzing = false;
+    this.currentOnMessageListener = null;
   }
 
   /**
@@ -83,9 +82,13 @@ export class AnalysisService {
       const isTurnoPretas = fen.includes(' b ');
       let ultimaAnalise: AnalisePosicao | null = null;
       let timeoutFuga: ReturnType<typeof setTimeout> | null = null;
+      let settled = false;
 
       const finalizar = () => {
+        if (settled) return;
+        settled = true;
         this.isAnalyzing = false;
+        this.currentOnMessageListener = null;
         if (timeoutFuga) clearTimeout(timeoutFuga);
         
         if (ultimaAnalise) {

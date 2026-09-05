@@ -1,5 +1,5 @@
 // src/features/timeselection/view/TimeView.tsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Animated, ActivityIndicator } from 'react-native';
 import { ArrowLeft, Clock, Activity } from 'lucide-react-native';
 
@@ -31,7 +31,7 @@ export function TimeView() {
 
   const isMultiplayer = false; 
 
-  const switchAnim = useRef(new Animated.Value(isEvalBarEnabled ? 1 : 0)).current;
+  const [switchAnim] = useState(() => new Animated.Value(isEvalBarEnabled ? 1 : 0));
 
   useEffect(() => {
     Animated.timing(switchAnim, {
@@ -39,7 +39,7 @@ export function TimeView() {
       duration: 200,
       useNativeDriver: false, 
     }).start();
-  }, [isEvalBarEnabled]);
+  }, [isEvalBarEnabled, switchAnim]);
 
   const thumbTranslateX = switchAnim.interpolate({
     inputRange: [0, 1],
@@ -56,6 +56,7 @@ export function TimeView() {
           <IconButton 
             icon={<ArrowLeft size={24} color="#ffffff" />} 
             onPress={() => navigation.goBack()} 
+            accessibilityLabel="Voltar"
           />
           <View style={styles.headerTextContainer}>
             <Text style={styles.title}>
@@ -96,7 +97,7 @@ export function TimeView() {
                 <ActivityIndicator size="large" color="#38bdf8" />
                 <Text style={styles.loadingText}>Carregando relógios...</Text>
               </View>
-            ) : errorMsg ? (
+            ) : errorMsg && tempos.length === 0 ? (
               <View style={styles.errorBox}>
                 <Text style={styles.errorText}>{errorMsg}</Text>
               </View>
@@ -121,10 +122,13 @@ export function TimeView() {
           </View>
 
           {/* Seção do Switch da Barra de Avaliação */}
-          {!isLoading && !errorMsg && (
+          {!isLoading && tempos.length > 0 && (
             <View style={styles.toggleSection}>
               <Pressable 
                 onPress={() => setIsEvalBarEnabled(!isEvalBarEnabled)}
+                accessibilityRole="switch"
+                accessibilityLabel="Barra de avaliação"
+                accessibilityState={{ checked: isEvalBarEnabled }}
                 style={({ pressed }) => [
                   styles.toggleCard,
                   pressed && { backgroundColor: '#1e293b' }
@@ -134,7 +138,7 @@ export function TimeView() {
                   <View style={[styles.iconWrapper, isEvalBarEnabled ? styles.iconActive : styles.iconInactive]}>
                     <Activity size={20} color={isEvalBarEnabled ? "#38bdf8" : "#94a3b8"} />
                   </View>
-                  <View>
+                  <View style={styles.toggleText}>
                     <Text style={styles.toggleTitle}>Barra de Avaliação</Text>
                     <Text style={styles.toggleSubtitle}>Mostra a vantagem do motor em tempo real</Text>
                   </View>
@@ -148,22 +152,24 @@ export function TimeView() {
             </View>
           )}
 
-          {errorMsg && !isLoading && (
+          {!isLoading && tempos.length > 0 && errorMsg ? (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>{errorMsg}</Text>
             </View>
-          )}
+          ) : null}
 
         </ScrollView>
 
         {/* Botão Fixo de Iniciar */}
-        {!isLoading && (
+        {!isLoading && tempos.length > 0 && (
           <View style={styles.footer}>
             <Button 
-              label={isCreatingMatch ? 'GERANDO TABULEIRO...' : 'COMEÇAR JOGO'} 
+              label="Começar jogo"
               size="lg" 
               variant={selectedTimeId ? 'primary' : 'secondary'}
               onPress={handleConfirmar}
+              loading={isCreatingMatch}
+              disabled={!selectedTimeId}
             />
           </View>
         )}
@@ -200,6 +206,7 @@ const styles = StyleSheet.create({
   toggleSection: { alignItems: 'center', marginTop: 8 },
   toggleCard: { width: '100%', maxWidth: 448, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: 'rgba(30, 41, 59, 0.5)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(51, 65, 85, 0.5)' },
   toggleInfo: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  toggleText: { flex: 1 },
   iconWrapper: { padding: 8, borderRadius: 8 },
   iconActive: { backgroundColor: 'rgba(56, 189, 248, 0.2)' },
   iconInactive: { backgroundColor: '#334155' },

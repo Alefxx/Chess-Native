@@ -13,6 +13,9 @@ export function TimeCard({ time, isSelected, onPress }: TimeCardProps) {
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Controle de tempo ${time.label}`}
+      accessibilityState={{ selected: isSelected }}
       style={({ pressed }) => [
         styles.base,
         isSelected ? styles.selected : styles.unselected,

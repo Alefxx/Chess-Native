@@ -1,6 +1,6 @@
 // src/features/match/view/GameLocalView.tsx
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated, ScrollView, useWindowDimensions, Platform } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 // Componentes da Nova Arquitetura Limpa
@@ -20,6 +20,7 @@ export function GameLocal() {
   
   const partidaData = route.params?.partidaData;
   const isEvalBarEnabled = route.params?.isEvalBarEnabled || false;
+  const { width, height } = useWindowDimensions();
 
   useEffect(() => {
     if (!partidaData || partidaData.tipoPartida !== 'local') {
@@ -31,29 +32,24 @@ export function GameLocal() {
 
   const [autoFlip, setAutoFlip] = useState(true);
 
-  const rotateAnim = useRef(new Animated.Value(autoFlip ? 1 : 0)).current;
+  const [rotateAnim] = useState(() => new Animated.Value(autoFlip ? 1 : 0));
 
   useEffect(() => {
     Animated.timing(rotateAnim, {
       toValue: autoFlip ? 1 : 0,
       duration: 500,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
-  }, [autoFlip]);
+  }, [autoFlip, rotateAnim]);
 
   const rotateInterpolate = rotateAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '180deg']
   });
 
-  if (!partidaData || !currentUser) return null;
-
   const boardOrientation = autoFlip ? (matchState.minhaCor === 'branca' ? 'white' : 'black') : 'white'; 
   const bottomColor = boardOrientation === 'white' ? 'branca' : 'preta';
   const topColor = boardOrientation === 'white' ? 'preta' : 'branca';
-
-  const bottomPlayerName = bottomColor === 'branca' ? partidaData.jogadores.brancas : partidaData.jogadores.pretas;
-  const topPlayerName = topColor === 'branca' ? partidaData.jogadores.brancas : partidaData.jogadores.pretas;
 
   const isBottomTurn = matchState.minhaCor === bottomColor;
   const isTopTurn = matchState.minhaCor === topColor;
@@ -62,10 +58,24 @@ export function GameLocal() {
   const clockBottom = useChessClock(bottomColor === 'branca' ? matchState.tempoBrancas : matchState.tempoPretas, isBottomTurn, isFimDeJogo);
   const clockTop = useChessClock(topColor === 'branca' ? matchState.tempoBrancas : matchState.tempoPretas, isTopTurn, isFimDeJogo);
 
+  if (!partidaData || !currentUser) return null;
+
+  const bottomPlayerName = bottomColor === 'branca' ? partidaData.jogadores.brancas : partidaData.jogadores.pretas;
+  const topPlayerName = topColor === 'branca' ? partidaData.jogadores.brancas : partidaData.jogadores.pretas;
+  const boardSize = Math.floor(Math.min(
+    width - (isEvalBarEnabled ? 72 : 32),
+    Math.max(220, height * 0.52),
+    520
+  ));
+
   return (
     // Substituímos o SafeAreaView pelo ScreenLayout com noPadding
     <ScreenLayout noPadding>
-      <View style={styles.container}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.content}>
           
           {/* HUD Superior (Animado com rotação) */}
@@ -84,7 +94,7 @@ export function GameLocal() {
               isClockActive={isTopTurn}
               isLowTime={clockTop.isLowTime}
               fen={matchState.gameFen}
-              capturedColor={topColor === 'branca' ? 'white' : 'black'}
+              capturedColor={bottomColor === 'branca' ? 'white' : 'black'}
               position="top"
             />
           </Animated.View>
@@ -93,7 +103,9 @@ export function GameLocal() {
           <View style={styles.boardWrapper}>
             <MatchBoardArea 
               isEvalBarEnabled={isEvalBarEnabled}
-              minhaCor={bottomColor} 
+              minhaCor={matchState.minhaCor as 'branca' | 'preta'}
+              boardOrientation={boardOrientation}
+              boardSize={boardSize}
               gameFen={matchState.gameFen}
               isCheck={matchState.isCheck}
               lastMove={matchState.lastMove}
@@ -101,7 +113,6 @@ export function GameLocal() {
               onSquareClick={matchState.onSquareClick}
               realizarMovimento={matchState.realizarMovimento}
               pendingPromotion={matchState.pendingPromotion}
-              setPendingPromotion={matchState.setPendingPromotion}
               vantagemBrancas={matchState.vantagemBrancas}
               isMate={matchState.isMate}
               gameOver={matchState.gameOver}
@@ -115,8 +126,15 @@ export function GameLocal() {
               avaliacoesLocais={matchState.avaliacoesLocais}
               fenHistory={matchState.fenHistory}
               moveCoordsHistory={matchState.moveCoordsHistory}
+              isMovePending={matchState.isMovePending}
             />
           </View>
+
+          {(matchState.isMovePending || matchState.gameError) && (
+            <Text style={[styles.feedback, matchState.gameError && styles.feedbackError]}>
+              {matchState.gameError || 'Validando jogada…'}
+            </Text>
+          )}
 
           {/* HUD Inferior */}
           <View style={[
@@ -138,7 +156,10 @@ export function GameLocal() {
 
           {/* Botão de Controle do Giro Automático */}
           <Pressable 
-            onPress={() => setAutoFlip(!autoFlip)}
+            onPress={() => setAutoFlip((value) => !value)}
+            accessibilityRole="switch"
+            accessibilityLabel="Giro automático do tabuleiro"
+            accessibilityState={{ checked: autoFlip }}
             style={({ pressed }) => [
               styles.toggleButton,
               pressed && styles.toggleButtonPressed
@@ -150,18 +171,18 @@ export function GameLocal() {
           </Pressable>
 
         </View>
-      </View>
+      </ScrollView>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  // Classe safeArea deletada!
+  scroll: { flex: 1 },
   container: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16, 
+    padding: 8,
   },
   content: {
     width: '100%',
@@ -179,8 +200,10 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   boardWrapper: {
-    zIndex: 10,
+    zIndex: 1,
   },
+  feedback: { color: '#8fd8f5', fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  feedbackError: { color: '#fecaca' },
   toggleButton: {
     width: '100%',
     paddingVertical: 12, 

@@ -49,6 +49,10 @@ export function Input({
           placeholderTextColor="#64748b" // placeholder:text-slate-500
           keyboardType={getKeyboardType()}
           secureTextEntry={type === 'password'} // Esconde a senha
+          autoCapitalize={type === 'email' || type === 'password' ? 'none' : 'sentences'}
+          autoCorrect={type !== 'password'}
+          textContentType={type === 'password' ? 'password' : type === 'email' ? 'emailAddress' : undefined}
+          accessibilityLabel={label}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           style={[
@@ -86,7 +90,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#334155', // border-slate-700
     borderRadius: 8, // rounded-lg
-    paddingVertical: 8, // py-2
+    minHeight: 50,
+    paddingVertical: 12,
     paddingRight: 16,
     color: '#ffffff', // text-white
     fontSize: 16, // md:text-base (melhor padrão para mobile)

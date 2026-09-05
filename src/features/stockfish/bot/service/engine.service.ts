@@ -4,6 +4,7 @@ export class EngineService {
   public isReady = false;
   public sendMessageToEngine: ((msg: string) => void) | null = null;
   private currentOnMessageListener: ((linha: string) => void) | null = null;
+  private cancelCurrentRequest: (() => void) | null = null;
 
   public receiveMessageFromEngine(linha: string) {
     if (linha === 'uciok') {
@@ -19,23 +20,34 @@ export class EngineService {
     if (this.sendMessageToEngine) this.sendMessageToEngine('uci');
   }
 
-  public getBestMove(fen: string, depth: number = 1, skillLevel: number = 0): Promise<string> {
+  public getBestMove(fen: string, depth: number = 1, skillLevel: number = 0): Promise<string | null> {
     return new Promise((resolve, reject) => {
       if (!this.sendMessageToEngine) {
-        return reject("Motor não conectado.");
+        return reject(new Error("Motor não conectado."));
       }
 
-      const fallbackTimeout = setTimeout(() => {
+      this.cancelPendingMove();
+      let settled = false;
+
+      const finish = (move: string | null) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(fallbackTimeout);
         this.currentOnMessageListener = null;
-        resolve("timeout"); 
+        this.cancelCurrentRequest = null;
+        resolve(move);
+      };
+
+      const fallbackTimeout = setTimeout(() => {
+        finish(null);
       }, 15000);
+
+      this.cancelCurrentRequest = () => finish(null);
 
       this.currentOnMessageListener = (linha: string) => {
         if (linha.startsWith('bestmove')) {
-          clearTimeout(fallbackTimeout);
           const move = linha.split(' ')[1];
-          this.currentOnMessageListener = null;
-          resolve(move);
+          finish(move);
         }
       };
       
@@ -48,6 +60,13 @@ export class EngineService {
       this.sendMessageToEngine(`position fen ${posicaoFen}`);
       this.sendMessageToEngine(`go depth ${depth}`);
     });
+  }
+
+  public cancelPendingMove() {
+    if (this.cancelCurrentRequest) {
+      this.sendMessageToEngine?.('stop');
+      this.cancelCurrentRequest();
+    }
   }
 }
 

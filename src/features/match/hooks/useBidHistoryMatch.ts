@@ -1,5 +1,5 @@
 // src/features/match/hooks/useBidHistoryMatch.ts
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 /**
  * Hook para gerenciar a lista de movimentos realizados (Histórico PGN).
@@ -11,11 +11,11 @@ export function useBidHistoryMatch() {
   /**
    * Atualiza o histórico de jogadas sempre que o servidor sincronizar o PGN oficial.
    */
-  const atualizarHistorico = (novoPgn?: string[]) => {
+  const atualizarHistorico = useCallback((novoPgn?: string[]) => {
     if (novoPgn) {
       setMoveHistory(novoPgn);
     }
-  };
+  }, []);
 
   return {
     moveHistory,

@@ -1,16 +1,30 @@
 // src/components/board/MoveHistoryBoard.tsx
 import React, { useRef } from 'react'; // <-- Import corrigido e useRef adicionado
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { Trophy } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 
 interface MoveHistoryBoardProps {
   pgnHistory: string[]; 
-  onProporEmpate: () => void;
-  onAbandonar: () => void;
+  onProporEmpate?: () => void;
+  onAbandonar?: () => void;
+  showActions?: boolean;
+  showDrawAction?: boolean;
+  actionsDisabled?: boolean;
+  onMovePress?: (index: number) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
-export function MoveHistoryBoard({ pgnHistory, onProporEmpate, onAbandonar }: MoveHistoryBoardProps) {
+export function MoveHistoryBoard({
+  pgnHistory,
+  onProporEmpate,
+  onAbandonar,
+  showActions = true,
+  showDrawAction = false,
+  actionsDisabled = false,
+  onMovePress,
+  style
+}: MoveHistoryBoardProps) {
   // Ref para controlar a rolagem da lista
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -24,7 +38,7 @@ export function MoveHistoryBoard({ pgnHistory, onProporEmpate, onAbandonar }: Mo
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       
       {/* Header */}
       <View style={styles.header}>
@@ -47,30 +61,44 @@ export function MoveHistoryBoard({ pgnHistory, onProporEmpate, onAbandonar }: Mo
           turnos.map((turno) => (
             <View key={turno.numero} style={styles.row}>
               <Text style={styles.colNumber}>{turno.numero}.</Text>
-              <Text style={styles.colMoveWhite}>{turno.brancas}</Text>
-              <Text style={styles.colMoveBlack}>{turno.pretas || ''}</Text>
+              <Pressable
+                style={styles.moveButton}
+                disabled={!onMovePress}
+                onPress={() => onMovePress?.((turno.numero - 1) * 2 + 1)}
+              >
+                <Text style={styles.colMoveWhite}>{turno.brancas}</Text>
+              </Pressable>
+              <Pressable
+                style={styles.moveButton}
+                disabled={!onMovePress || !turno.pretas}
+                onPress={() => onMovePress?.((turno.numero - 1) * 2 + 2)}
+              >
+                <Text style={styles.colMoveBlack}>{turno.pretas || ''}</Text>
+              </Pressable>
             </View>
           ))
         )}
       </ScrollView>
 
       {/* Ações da Partida */}
-      <View style={styles.actionsContainer}>
-        <View style={{ flex: 1 }}>
+      {showActions && onAbandonar && <View style={styles.actionsContainer}>
+        {showDrawAction && <View style={{ flex: 1 }}>
           <Button 
             label="Empate" 
             variant="secondary" 
             onPress={onProporEmpate}
+            disabled={actionsDisabled}
           />
-        </View>
+        </View>}
         <View style={{ flex: 1 }}>
           <Button 
             label="Abandonar" 
             variant="danger" 
             onPress={onAbandonar}
+            disabled={actionsDisabled}
           />
         </View>
-      </View>
+      </View>}
     </View>
   );
 }
@@ -78,10 +106,10 @@ export function MoveHistoryBoard({ pgnHistory, onProporEmpate, onAbandonar }: Mo
 const styles = StyleSheet.create({
   container: {
     flex: 1, 
-    backgroundColor: '#1e293b', 
+    backgroundColor: '#0f1d2e',
     borderRadius: 12, 
     borderWidth: 1,
-    borderColor: '#334155', 
+    borderColor: '#29405c',
     padding: 16, 
   },
   header: {
@@ -118,17 +146,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   colMoveWhite: {
-    flex: 1, 
     fontWeight: 'bold',
     color: '#cbd5e1', 
     fontFamily: 'monospace',
     fontSize: 14,
   },
   colMoveBlack: {
-    flex: 1, 
     color: '#94a3b8', 
     fontFamily: 'monospace',
     fontSize: 14,
+  },
+  moveButton: {
+    flex: 1,
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderRadius: 6,
   },
   emptyText: {
     textAlign: 'center',

@@ -45,7 +45,8 @@ export function EvalBar({ vantagemBrancas, isMate, isInvertida = false }: EvalBa
 const styles = StyleSheet.create({
   container: {
     width: 32, // w-8
-    minHeight: 400,
+    height: '100%',
+    minHeight: 1,
     borderRadius: 4,
     overflow: 'hidden',
     borderWidth: 1,

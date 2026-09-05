@@ -19,11 +19,13 @@ export function BotCard({ bot, isSelected, onPress }: BotCardProps) {
   return (
     <Pressable 
       onPress={onPress}
-      style={[
+      accessibilityRole="button"
+      accessibilityState={{ selected: isSelected }}
+      accessibilityLabel={`${bot.nome}, ${bot.rating} ELO`}
+      style={({ pressed }) => [
         styles.cardBase,
         isSelected ? styles.cardSelected : styles.cardUnselected,
-        // Aplica o scale-105 dinamicamente se estiver selecionado
-        isSelected && { transform: [{ scale: 1.05 }] }
+        pressed && styles.cardPressed
       ]}
     >
       {/* Selo de Selecionado */}
@@ -63,7 +65,9 @@ export function BotCard({ bot, isSelected, onPress }: BotCardProps) {
 const styles = StyleSheet.create({
   cardBase: {
     alignItems: 'center',
-    padding: 16, // p-4
+    paddingHorizontal: 12,
+    paddingBottom: 16,
+    paddingTop: 28,
     borderRadius: 12, // rounded-xl
     borderWidth: 2,
     position: 'relative', // Para o badge absoluto
@@ -81,9 +85,10 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
     elevation: 8,
   },
+  cardPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   badge: {
     position: 'absolute',
-    top: -12, // -top-3
+    top: 8,
     backgroundColor: '#88c425',
     paddingHorizontal: 12, // px-3
     paddingVertical: 4, // py-1

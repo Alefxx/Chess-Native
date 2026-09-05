@@ -1,8 +1,8 @@
 // src/api/apiClient.ts
-import axios from 'axios';
+import { create } from 'axios';
 
 // instância configurada do Axios
-export const apiClient = axios.create({
+export const apiClient = create({
   // No Expo/React Native, usamos process.env e o prefixo EXPO_PUBLIC_
   baseURL: process.env.EXPO_PUBLIC_API_URL,
   headers: {

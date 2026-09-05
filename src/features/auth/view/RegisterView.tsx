@@ -64,7 +64,7 @@ export function RegisterView() {
   };
 
   return (
-    <ScreenLayout noPadding>
+    <ScreenLayout noPadding keyboardAware>
       <ScrollView 
         contentContainerStyle={styles.scrollContent} 
         showsVerticalScrollIndicator={false}
@@ -85,9 +85,11 @@ export function RegisterView() {
                 icon={<ArrowLeft size={20} color="#cbd5e1" />} 
                 onPress={() => navigation.navigate('Login')} 
                 variant="ghost"
+                accessibilityLabel="Voltar para o login"
               />
             </View>
             <Text style={styles.title}>Novo Jogador</Text>
+            <View style={styles.headerSpacer} />
           </View>
           
           {errorMsg ? (
@@ -105,8 +107,10 @@ export function RegisterView() {
 
           <View style={styles.actionContainer}>
             <Button 
-              label={isLoading ? 'Criando e Autenticando...' : 'Cadastrar e Jogar'} 
+              label="Cadastrar e Jogar"
               onPress={handleRegister} 
+              loading={isLoading}
+              disabled={!nome.trim() || !username.trim() || !senha || !confirmSenha}
             />
           </View>
         </Card>
@@ -137,22 +141,22 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   cardHeader: {
-    position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24, 
   },
   backButtonWrapper: {
-    position: 'absolute',
-    left: 0,
-    zIndex: 10,
+    width: 48,
   },
   title: {
+    flex: 1,
     fontSize: 24, 
     fontWeight: 'bold', 
     color: '#ffffff',
+    textAlign: 'center',
   },
+  headerSpacer: { width: 48 },
   errorBox: {
     marginBottom: 16, 
     padding: 12, 

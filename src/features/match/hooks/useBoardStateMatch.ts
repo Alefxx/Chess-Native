@@ -32,7 +32,7 @@ export function useBoardStateMatch(partidaData: any, currentUser: any) {
   
   // ALTERAÇÃO: No modo local, a 'minhaCor' (cor que envia o comando pra API) alterna dinamicamente 
   // conforme o turno FEN. No online/bot, ela continua cravada na conta do usuário logado.
-  const minhaCor = isLocal 
+  const minhaCor: 'branca' | 'preta' = isLocal
     ? (turnoAtualFEN === 'w' ? 'branca' : 'preta') 
     : (brancasUser === logadoUser ? 'branca' : 'preta');
   

@@ -1,5 +1,5 @@
 // src/features/timeselection/hooks/useTime.ts
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { timeService, TimeOption } from '@/features/timeselection/service/time.service';
 import { matchService } from '@/features/match/service/match.service';
@@ -15,6 +15,8 @@ export function useTime() {
   const [selectedColor, setSelectedColor] = useState<PlayerColor>('random');
   const [selectedTimeId, setSelectedTimeId] = useState<string | null>(null);
   const [isEvalBarEnabled, setIsEvalBarEnabled] = useState(false);
+  const createInFlight = useRef(false);
+  const mounted = useRef(true);
 
   // ATUALIZAÇÃO MOBILE: Hooks do React Navigation
   const navigation = useNavigation<any>();
@@ -28,6 +30,9 @@ export function useTime() {
   const guestName = route.params?.guestName || 'Visitante';
 
   useEffect(() => {
+    let active = true;
+    mounted.current = true;
+
     if (!botOponente && tipoPartida !== 'local') {
       navigation.replace('Dashboard');
       return;
@@ -37,22 +42,27 @@ export function useTime() {
       try {
         setIsLoading(true);
         const data = await timeService.listarTempos();
-        setTempos(data);
-      } catch (error) {
-        setErrorMsg('Erro ao carregar configurações de tempo.');
+        if (active) setTempos(data);
+      } catch {
+        if (active) setErrorMsg('Erro ao carregar configurações de tempo.');
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     };
 
     fetchTempos();
+    return () => {
+      active = false;
+      mounted.current = false;
+    };
   }, [botOponente, tipoPartida, navigation]);
 
   const handleConfirmar = async () => {
-    if (!selectedTimeId || !currentUser) return;
+    if (createInFlight.current || !selectedTimeId || !currentUser) return;
     if (tipoPartida === 'bot' && !botOponente) return;
 
     try {
+      createInFlight.current = true;
       setIsCreatingMatch(true);
       setErrorMsg('');
 
@@ -82,16 +92,16 @@ export function useTime() {
 
       // ATUALIZAÇÃO MOBILE: Passando os dados no navigate e usando o nome das telas configuradas
       if (respostaPartida.tipoPartida === 'local') {
-        navigation.navigate('GameLocal', { partidaData: respostaPartida, isEvalBarEnabled });
+        navigation.replace('GameLocal', { partidaData: respostaPartida, isEvalBarEnabled });
       } else {
-        navigation.navigate('Match', { partidaData: respostaPartida, botOponente, isEvalBarEnabled });
+        navigation.replace('Match', { partidaData: respostaPartida, botOponente, isEvalBarEnabled });
       }
 
     } catch (error: any) {
-      console.error(error);
-      setErrorMsg(error.response?.data?.erro || 'Erro ao iniciar partida no servidor.');
+      if (mounted.current) setErrorMsg(error.message || 'Erro ao iniciar partida no servidor.');
     } finally {
-      setIsCreatingMatch(false);
+      createInFlight.current = false;
+      if (mounted.current) setIsCreatingMatch(false);
     }
   };
 

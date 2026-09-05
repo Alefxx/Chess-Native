@@ -1,5 +1,5 @@
 // src/features/match/hooks/useGameRulesMatch.ts
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 /**
  * Representa o estado de finalização da partida.
@@ -33,7 +33,7 @@ export function useGameRulesMatch() {
   /**
    * Sincroniza os estados locais de regras com base nos dados processados pelo servidor.
    */
-  const atualizarRegras = (statusPartida?: any, detalhes?: any) => {
+  const atualizarRegras = useCallback((statusPartida?: any, detalhes?: any) => {
     // 1. Atualização do status de Xeque (prioriza dados do status ou detalhes técnicos)
     if (statusPartida?.isXeque || detalhes?.isXeque) {
       setIsCheck(true);
@@ -52,7 +52,7 @@ export function useGameRulesMatch() {
         };
       });
     }
-  };
+  }, []);
 
   return {
     isCheck,
