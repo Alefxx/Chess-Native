@@ -34,15 +34,7 @@
     "plugins": [
       "expo-status-bar",
       "expo-image",
-      "expo-splash-screen",
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "usesCleartextTraffic": true
-          }
-        }
-      ]
+      "expo-splash-screen"
     ]
   }
 }
