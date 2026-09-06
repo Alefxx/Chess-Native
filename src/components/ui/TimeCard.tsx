@@ -34,6 +34,8 @@ export function TimeCard({ time, isSelected, onPress }: TimeCardProps) {
 
 const styles = StyleSheet.create({
   base: {
+    width: '100%',
+    minHeight: 48,
     paddingVertical: 12, // py-3
     paddingHorizontal: 8, // px-2
     borderRadius: 8, // rounded-lg

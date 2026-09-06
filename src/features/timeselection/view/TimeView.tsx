@@ -1,14 +1,15 @@
 // src/features/timeselection/view/TimeView.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Animated, ActivityIndicator } from 'react-native';
 import { ArrowLeft, Clock, Activity } from 'lucide-react-native';
 
 import { IconButton } from '@/components/ui/IconButton';
 import { Button } from '@/components/ui/Button';
 import { ColorSelector } from '@/components/ui/ColorSelector';
-import { TimeCard } from '@/components/ui/TimeCard';
 import { useTime } from '../hooks/useTime'; 
 import { ScreenLayout } from '@/components/layout/ScreenLayout'; // <-- Import do nosso Layout Profissional!
+import { TimeCategorySection } from '@/components/ui/TimeCategorySection';
+import { groupTimeOptions, TimeCategoryKey } from '../utils/timeCategories';
 
 export function TimeView() {
   const {
@@ -30,6 +31,9 @@ export function TimeView() {
   } = useTime();
 
   const isMultiplayer = false; 
+  const scrollRef = useRef<ScrollView>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Partial<Record<TimeCategoryKey, boolean>>>({});
+  const timeCategories = useMemo(() => groupTimeOptions(tempos), [tempos]);
 
   const [switchAnim] = useState(() => new Animated.Value(isEvalBarEnabled ? 1 : 0));
 
@@ -45,6 +49,11 @@ export function TimeView() {
     inputRange: [0, 1],
     outputRange: [2, 22] 
   });
+
+  const handleTimeSelect = (id: string) => {
+    setSelectedTimeId(id);
+    scrollRef.current?.scrollToEnd({ animated: true });
+  };
 
   return (
     // Substituímos o SafeAreaView e a View root pelo nosso ScreenLayout
@@ -71,6 +80,7 @@ export function TimeView() {
         </View>
 
         <ScrollView 
+          ref={scrollRef}
           style={styles.scrollArea}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -102,21 +112,22 @@ export function TimeView() {
                 <Text style={styles.errorText}>{errorMsg}</Text>
               </View>
             ) : (
-              // Grade Flexível
-              <View style={styles.grid}>
-                {tempos.map((tempo) => {
-                  const identificador = tempo.slug || tempo._id || tempo.id || '';
-                  
-                  return (
-                    <View key={identificador} style={styles.gridItem}>
-                      <TimeCard 
-                        time={tempo} 
-                        isSelected={selectedTimeId === identificador}
-                        onPress={() => setSelectedTimeId(identificador)}
-                      />
-                    </View>
-                  );
-                })}
+              <View style={styles.categories}>
+                {timeCategories.map((category) => (
+                  <TimeCategorySection
+                    key={category.key}
+                    label={category.label}
+                    description={category.description}
+                    times={category.times}
+                    expanded={!!expandedCategories[category.key]}
+                    selectedTimeId={selectedTimeId}
+                    onSelect={handleTimeSelect}
+                    onToggle={() => setExpandedCategories((current) => ({
+                      ...current,
+                      [category.key]: !current[category.key],
+                    }))}
+                  />
+                ))}
               </View>
             )}
           </View>
@@ -158,21 +169,22 @@ export function TimeView() {
             </View>
           ) : null}
 
+          {!isLoading && tempos.length > 0 && (
+            <View style={styles.footer}>
+              <Text style={styles.footerHint}>
+                {selectedTimeId ? 'Tudo pronto para começar.' : 'Escolha um controle de tempo.'}
+              </Text>
+              <Button
+                label="Jogar"
+                size="lg"
+                variant={selectedTimeId ? 'primary' : 'secondary'}
+                onPress={handleConfirmar}
+                loading={isCreatingMatch}
+                disabled={!selectedTimeId}
+              />
+            </View>
+          )}
         </ScrollView>
-
-        {/* Botão Fixo de Iniciar */}
-        {!isLoading && tempos.length > 0 && (
-          <View style={styles.footer}>
-            <Button 
-              label="Começar jogo"
-              size="lg" 
-              variant={selectedTimeId ? 'primary' : 'secondary'}
-              onPress={handleConfirmar}
-              loading={isCreatingMatch}
-              disabled={!selectedTimeId}
-            />
-          </View>
-        )}
 
       </View>
     </ScreenLayout>
@@ -189,7 +201,7 @@ const styles = StyleSheet.create({
   subtitle: { color: '#94a3b8', fontSize: 14, marginTop: 2 },
   opponentName: { color: '#38bdf8', fontWeight: 'bold' },
   scrollArea: { flex: 1 },
-  scrollContent: { paddingBottom: 24, gap: 40 },
+  scrollContent: { paddingBottom: 24, gap: 32 },
   
   section: { width: '100%' },
   sectionTitleRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, marginBottom: 16 },
@@ -200,8 +212,7 @@ const styles = StyleSheet.create({
   errorBox: { padding: 16, backgroundColor: 'rgba(127, 29, 29, 0.5)', borderColor: '#ef4444', borderWidth: 1, borderRadius: 8, alignItems: 'center' },
   errorText: { color: '#fecaca', textAlign: 'center' },
   
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
-  gridItem: { width: '31%' },
+  categories: { gap: 14 },
   
   toggleSection: { alignItems: 'center', marginTop: 8 },
   toggleCard: { width: '100%', maxWidth: 448, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: 'rgba(30, 41, 59, 0.5)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(51, 65, 85, 0.5)' },
@@ -218,5 +229,14 @@ const styles = StyleSheet.create({
   switchTrackOff: { backgroundColor: '#475569' },
   switchThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#ffffff', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 2, elevation: 2 },
 
-  footer: { paddingTop: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: 'rgba(51, 65, 85, 0.5)' } // Ajustei o paddingBottom de 32 pra 16 pro botão não ficar tão alto
+  footer: {
+    width: '100%',
+    maxWidth: 448,
+    alignSelf: 'center',
+    gap: 10,
+    paddingTop: 18,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(51, 65, 85, 0.5)',
+  },
+  footerHint: { color: '#94a3b8', fontSize: 12, textAlign: 'center' },
 });
