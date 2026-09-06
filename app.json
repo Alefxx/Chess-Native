@@ -4,23 +4,33 @@
     "slug": "chessnative",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": ".src/assets/icon.jpg"
     "scheme": "chessnative",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#07111f",
+    "icon": "./src/assets/icon.png",
+
     "ios": {
       "supportsTablet": true
     },
+
     "android": {
       "softwareKeyboardLayoutMode": "resize",
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.chessnative",
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/icon.png",
+        "backgroundColor": "#07111f"
+      }
     },
+
     "web": {
       "output": "single",
       "backgroundColor": "#07111f",
       "themeColor": "#07111f",
-      "lang": "pt-BR"
+      "lang": "pt-BR",
+      "favicon": "./src/assets/icon.png"
     },
+
     "plugins": [
       "expo-status-bar",
       "expo-image",
